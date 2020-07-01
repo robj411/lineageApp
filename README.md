@@ -1,4 +1,4 @@
-<!-->[![Build Status](https://travis-ci.org/jstockwin/EpiEstimApp.svg?branch=master)](https://travis-ci.org/jstockwin/EpiEstimApp)
+<!--[![Build Status](https://travis-ci.org/jstockwin/EpiEstimApp.svg?branch=master)](https://travis-ci.org/jstockwin/EpiEstimApp)
 
 # TransmissibilityEstimator
 
@@ -8,4 +8,4 @@ The authors request users to cite the original publication when referring to thi
 
 https://github.com/jstockwin/EpiEstimApp/wiki
 
-<-->
+-->
