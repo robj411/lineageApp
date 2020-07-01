@@ -28,8 +28,6 @@ if(file.exists('datasets/lineageSetup.Rdata')){
   
   gg_sarscov2skygrowth <- function(x, metric='growth', log_size=F,date_limits = c( as.Date( '2020-03-01'), NA ) ,ci,col,... )
   {
-    require(ggplot2)
-    require(lubridate)
     stopifnot( inherits( x, 'sarscov2skygrowth' ))
     y = x[[metric]]
     taxis = as.Date( y$time )

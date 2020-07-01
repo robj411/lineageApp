@@ -1,0 +1,12 @@
+self: true
+packages:
+  - lubridate
+  - ggplot2
+  - sarscov2
+  - grid
+  - shiny
+  - shinyjs
+  - shinythemes
+  - DT
+  - scales
+  
