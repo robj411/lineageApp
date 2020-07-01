@@ -8,8 +8,8 @@ library(ape)
 library(ggtree)
 library(DT)
 
-if(file.exists('data/lineageSetup.Rdata')){
-  load('data/lineageSetup.Rdata')
+if(file.exists('datasets/lineageSetup.Rdata')){
+  load('datasets/lineageSetup.Rdata')
 }else{
   add_line <- function(pl,x1,metric='Ne',  date_limits = c( as.Date( '2020-02-01'), NA ),ci ,col,... ){
     y = x1[[metric]]
@@ -99,7 +99,7 @@ if(file.exists('data/lineageSetup.Rdata')){
   parms$geno_labs <- paste0('All "',unique(parms$p614),'"')
   parms$track_geno_groups <- rep(0,length(parms$geno_labs))
   rm(cols,files,gtdsfiles,i,ids,labels,lineages,maxind,p614,sequences,sgfiles,trees,x)
-  save(list=ls(),file= 'data/lineageSetup.Rdata')
+  save(list=ls(),file= 'datasets/lineageSetup.Rdata')
 }
 
 
