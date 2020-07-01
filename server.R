@@ -1,12 +1,12 @@
-library( deSolve ) 
 library( lubridate )
 library( ggplot2 )
 library( shiny )
 library(sarscov2)
 library(grid)
-library(ape)
-library(ggtree)
+#library(ape)
+#library(ggtree)
 library(DT)
+library(scales)
 
 if(file.exists('datasets/lineageSetup.Rdata')){
   load('datasets/lineageSetup.Rdata')
@@ -26,7 +26,7 @@ if(file.exists('datasets/lineageSetup.Rdata')){
   }
   
   
-  gg_sarscov2skygrowth <- function(x, metric='growth', date_limits = c( as.Date( '2020-03-01'), NA ) ,ci,col,... )
+  gg_sarscov2skygrowth <- function(x, metric='growth', log_size=F,date_limits = c( as.Date( '2020-03-01'), NA ) ,ci,col,... )
   {
     require(ggplot2)
     require(lubridate)
@@ -46,6 +46,7 @@ if(file.exists('datasets/lineageSetup.Rdata')){
     pldf <- pldf[ with( pldf, Date > date_limits[1] & Date <= date_limits[2] ) , ]
     pl = ggplot( pldf) + 
       geom_path( aes(x = Date, y = out ), lwd=0.8,col=col) 
+    if(log_size) pl <- pl  +  scale_y_continuous(limits=c(1e-3,NA), trans='log',label=scientific_format(digits=2)) 
     
     if(ci==1) {
       pl <- pl +  geom_ribbon( aes(x = Date, ymin=`2.5%`, ymax=`97.5%`) , alpha = .1 ,col=col,lwd=0) 
@@ -84,9 +85,9 @@ if(file.exists('datasets/lineageSetup.Rdata')){
   ## get genotypes
   metadata <- read.csv('https://microreact.org/api/viewer/data?project=cogconsortium-2020-06-19')
   metadata <- subset(metadata,uk_lineage%in%ids)[,colnames(metadata)%in%c('uk_lineage','d614g')]
-  GDs <- sapply(ids,function(x){subx <- subset(metadata,uk_lineage==x);(unique(subx$d614g))})
-  Ds <- sapply(ids,function(x){subx <- subset(metadata,uk_lineage==x);!any(subx$d614g!='D')})
-  Gs <- sapply(ids,function(x){subx <- subset(metadata,uk_lineage==x);!any(subx$d614g!='G')})
+  #GDs <- sapply(ids,function(x){subx <- subset(metadata,uk_lineage==x);(unique(subx$d614g))})
+  Ds <- sapply(ids,function(x){subx <- subset(metadata,uk_lineage==x);sum(subx$d614g=='G')<0.1*nrow(subx)})
+  Gs <- sapply(ids,function(x){subx <- subset(metadata,uk_lineage==x);sum(subx$d614g=='D')<0.1*nrow(subx)})
   cols <- rep('darkorange',length=length(ids))
   cols[Ds] <- 'navyblue'
   cols[Gs] <- 'turquoise'
@@ -115,18 +116,25 @@ if(file.exists('datasets/lineageSetup.Rdata')){
 shiny::shinyServer(function(input, output, session) {
   ## initialise checkboxes
   updateCheckboxGroupInput(session, inputId='ti_DGX', label='Genotypes', choices = parms$geno_labs)
-  updateCheckboxGroupInput(session, inputId='ti_filename', label = 'Lineages', choices = parms$labels, selected = parms$labels[1])
-  updateSelectInput(session, inputId='ti_filename_tree', label = '', parms$labels)
+  updateCheckboxGroupInput(session, inputId='ti_filename', label = 'Lineages', choices = parms$labels, selected = parms$labels[which(parms$ids=='UK5')])
+  updateSelectInput(session, inputId='ti_filename_tree', label = '', choices = parms$labels, selected = parms$labels[which(parms$ids=='UK5')])
   re.filename <- reactiveVal( parms$filename )
   re.filename_tree <- reactiveVal( parms$filename_tree )
   re.ci <- reactiveVal( 1 )
   re.DGX <- reactiveVal( NULL )
+  re.log_size <- reactiveVal( F )
   
   ## observe input events
+  ## plot credible intervals?
   observeEvent( input$ti_ci, {
     re.ci( input$ti_ci )
   })
+  ## log size?
+  observeEvent( input$ti_log_size, {
+    re.log_size( input$ti_log_size )
+  })
   
+  ## plot all D or all G?
   observeEvent( input$ti_DGX, {
     re.DGX( input$ti_DGX )
     new_labs <- as.numeric(parms$geno_labs%in%input$ti_DGX)
@@ -148,10 +156,15 @@ shiny::shinyServer(function(input, output, session) {
     }
   }, ignoreNULL = FALSE)
   
+  ## which filenames are selected for trajectories?
   observeEvent( input$ti_filename, {
     re.filename( input$ti_filename )
+    ## if just one trajectory, update tree
+    if(length(input$ti_filename)==1)
+      updateSelectInput(session,"ti_filename_tree",selected=input$ti_filename)
   })
   
+  ## which filename is selected for tree?
   observeEvent( input$ti_filename_tree, {
     re.filename_tree( input$ti_filename_tree )
     updateCheckboxGroupInput(session,"ti_filename",selected=unique(c(input$ti_filename_tree,input$ti_filename)))
@@ -167,11 +180,12 @@ shiny::shinyServer(function(input, output, session) {
   
   prep_plot <- function(metric='growth'){
     ci <- re.ci() 
+    log_size <- metric=='Ne' & re.log_size()
     lin <- update_lineage()
     sgs <- lin[[1]]
     ids <- lin[[2]]
     req(inherits(sgs[[1]], "sarscov2skygrowth"))
-    p0 <- gg_sarscov2skygrowth(sgs[[1]],metric=metric,date_limits=c( as.Date( '2020-02-01'), NA ) ,ci,parms$cols[lin[[2]][1]])
+    p0 <- gg_sarscov2skygrowth(sgs[[1]],metric=metric,log_size=log_size,date_limits=c( as.Date( '2020-02-01'), NA ) ,ci,parms$cols[lin[[2]][1]])
     if(length(ids)>1){
       for(i in 2:length(ids)){
         p0 <- add_line(p0,sgs[[i]],metric=metric,date_limits=c( as.Date( '2020-02-01'), NA ) ,ci,parms$cols[lin[[2]][i]])
@@ -189,20 +203,31 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   output$Ne <- renderPlot({
-    plot( prep_plot(metric='Ne'))
+    suppressWarnings(plot( prep_plot(metric='Ne')))
   })
   
-  output$tree <- renderPlot({
+  ## plot tree with height depending on number of sequences
+  observe({
     fname <- re.filename_tree() 
     l_ind <- match(fname,parms$labels)
-    quick_region_treeplot(parms$tree[[l_ind]],'England')
+    hgt <- length(parms$tree[[l_ind]]$Ti)
+    output$tree <- renderPlot({
+      quick_region_treeplot(parms$tree[[l_ind]],'England')
+    }, 
+    height = 3*hgt+500)
   })
   
-  output$sequences <- renderDataTable({
-    #fname <- re.filename_tree() 
-    #l_ind <- match(fname,parms$labels)
-    datatable(parms$sequences,options = list("pageLength" = 500))
-    
+  observe({
+    show_all_sequences <- input$show_all_sequences
+    output$sequences <- renderDataTable({
+      tab <- parms$sequences
+      if(!show_all_sequences){
+        fname <- re.filename_tree() 
+        l_ind <- match(fname,parms$labels)
+        tab <- subset(tab,Lineage%in%parms$ids[l_ind])
+      }
+      datatable(tab,options = list("pageLength" = 500))
+    })
   })
   
   output$legend <- renderPlot({

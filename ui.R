@@ -38,7 +38,8 @@ shinyUI(
                              ),
                              div(id = "1.1",
                                  div(id = "incidence_data_type_error_box", class = "error_box",
-                                     checkboxInput('ti_ci', label = "Credible intervals", 1)
+                                     checkboxInput('ti_ci', label = "Credible intervals", 1),
+                                     checkboxInput(inputId='ti_log_size', label='Effective size on log scale', value=F)
                                      , checkboxGroupInput(inputId='ti_DGX', label='Genotypes', choices = NULL, selected = NULL)
                                      , checkboxGroupInput(inputId='ti_filename', label='Lineages', choices = NULL, selected = NULL)
                                      
@@ -63,14 +64,15 @@ shinyUI(
                       #downloadButton("save_incidence",
                       #               "Save Table"),
                       selectInput('ti_filename_tree', label = '', NULL),
-                      fluidRow( plotOutput( 'tree', width = "100%", height = "800px"), align="right")
+                      fluidRow( plotOutput( 'tree', width = "100%", height = "auto"), align="right")
              ),
              tabPanel("Sequences",
                       #downloadButton("save_r", "Save Table"),
                       #tableOutput("estimated_r_output")
                       fluidRow(
+                        checkboxInput(inputId='show_all_sequences', label='Show all sequences', value=F),
                         dataTableOutput(outputId = 'sequences')
-                        , style = "font-size:15px", align="center")
+                        , style = "font-size:15px", align="left")
              )
            )
     )
