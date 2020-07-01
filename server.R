@@ -62,20 +62,17 @@ if(file.exists('datasets/lineageSetup.Rdata')){
     pl
   }
   
-  files <- list.files('data/skygrowth1/')
-  sgfiles <- files[sapply(files,function(x)grepl('\\.sg-',x))]
+  ## get file names
+  files <- list.files('datasets/skygrowth1/')
   gtdsfiles <- files[sapply(files,function(x)grepl('\\.gtds',x))]
-  ids <- sapply(sgfiles,function(txt)gsub('.rds','',gsub('skygrowth1.sg-','',txt)))
-  lineages <- readRDS('data/skygrowth1/skygrowth1.sgs.rds')
-  #lengths <- min_time <- max_time <- c()
+  ids <- sapply(gtdsfiles,function(txt)gsub('.rds','',gsub('skygrowth1.gtds-','',txt)))
+  lineages <- readRDS('datasets/skygrowth1/skygrowth1.sgs.rds')
+                
+  ## store information
   trees <- list()
   sequences <- list()
-  for(i in 1:length(sgfiles)){
-    #lengths[i] <- lineages[[ids[i]]]$Ntip
-    x <- readRDS(paste0('data/skygrowth1/',gtdsfiles[i]))
-    #times <- range(sapply(x,function(y)y[[14]]))
-    #min_time[i] <- times[1]
-    #max_time[i] <- times[2]
+  for(i in 1:length(gtdsfiles)){
+    x <- readRDS(paste0('datasets/skygrowth1/',gtdsfiles[i]))
     maxind <- which.max(sapply(x,function(y)y[[7]]))
     trees[[i]] <- x[[maxind]]
     sequences[[i]] <- as.data.frame(cbind(t(sapply(x[[1]]$tip.label,function(y)strsplit(y,'\\|')[[1]][1:2])),ids[i])) # sapply(x[[1]]$tip.label,function(y)gsub('England/','',y))
@@ -83,8 +80,21 @@ if(file.exists('datasets/lineageSetup.Rdata')){
     sequences[[i]][,2] <- as.character(as.Date(date_decimal(as.numeric(as.character(sequences[[i]][,2])))))
     rownames(sequences[[i]]) <- NULL
   }
-  cols <- read.csv('data/DGcols.csv',stringsAsFactors=F,header = F)[,1]
-  cols <- readRDS('data/DGcols.Rds')
+  
+  ## get genotypes
+  metadata <- read.csv('https://microreact.org/api/viewer/data?project=cogconsortium-2020-06-19')
+  metadata <- subset(metadata,uk_lineage%in%ids)[,colnames(metadata)%in%c('uk_lineage','d614g')]
+  GDs <- sapply(ids,function(x){subx <- subset(metadata,uk_lineage==x);(unique(subx$d614g))})
+  Ds <- sapply(ids,function(x){subx <- subset(metadata,uk_lineage==x);!any(subx$d614g!='D')})
+  Gs <- sapply(ids,function(x){subx <- subset(metadata,uk_lineage==x);!any(subx$d614g!='G')})
+  cols <- rep('darkorange',length=length(ids))
+  cols[Ds] <- 'navyblue'
+  cols[Gs] <- 'turquoise'
+  p614 <- rep('D/G/X',length=length(cols))
+  p614[cols=='navyblue'] <- 'D'
+  p614[cols=='turquoise'] <- 'G'
+  
+  ## save items
   parms <- list()
   parms$sequences <- do.call(rbind,sequences)
   parms$tree <- trees
@@ -92,19 +102,18 @@ if(file.exists('datasets/lineageSetup.Rdata')){
   parms$ids <- unname(ids)
   parms$lineages <- lineages
   parms$cols <- cols
-  p614 <- readRDS('data/DGp614.Rds')
   parms$p614 <- p614
-  labels <- paste0(ids,' (',p614,')')
-  parms$labels <- labels
+  parms$labels <- paste0(ids,' (',p614,')')
   parms$geno_labs <- paste0('All "',unique(parms$p614),'"')
   parms$track_geno_groups <- rep(0,length(parms$geno_labs))
-  rm(cols,files,gtdsfiles,i,ids,labels,lineages,maxind,p614,sequences,sgfiles,trees,x)
+  ## clear environment
+  rm(cols,files,gtdsfiles,i,ids,lineages,maxind,p614,sequences,trees,x)
   save(list=ls(),file= 'datasets/lineageSetup.Rdata')
 }
 
 
 shiny::shinyServer(function(input, output, session) {
-  
+  ## initialise checkboxes
   updateCheckboxGroupInput(session, inputId='ti_DGX', label='Genotypes', choices = parms$geno_labs)
   updateCheckboxGroupInput(session, inputId='ti_filename', label = 'Lineages', choices = parms$labels, selected = parms$labels[1])
   updateSelectInput(session, inputId='ti_filename_tree', label = '', parms$labels)
@@ -113,6 +122,7 @@ shiny::shinyServer(function(input, output, session) {
   re.ci <- reactiveVal( 1 )
   re.DGX <- reactiveVal( NULL )
   
+  ## observe input events
   observeEvent( input$ti_ci, {
     re.ci( input$ti_ci )
   })
@@ -121,9 +131,11 @@ shiny::shinyServer(function(input, output, session) {
     re.DGX( input$ti_DGX )
     new_labs <- as.numeric(parms$geno_labs%in%input$ti_DGX)
     group_to_update <- which(new_labs!=parms$track_geno_groups)
+    ## only if there was a change to selection
     if(length(group_to_update)>0){
       old_selected <- input$ti_filename
       labs_to_include_or_exclude <- parms$labels[parms$p614%in%unique(parms$p614)[group_to_update]]
+      ## either add a set or remove a set
       if(new_labs[group_to_update]==1){
         new_selected <- unique(c(old_selected,labs_to_include_or_exclude))
       }else{
@@ -145,6 +157,7 @@ shiny::shinyServer(function(input, output, session) {
     updateCheckboxGroupInput(session,"ti_filename",selected=unique(c(input$ti_filename_tree,input$ti_filename)))
   })
   
+  ## plot outputs
   update_lineage <- reactive({
     fname <- re.filename() 
     l_ind <- match(fname,parms$labels)
@@ -182,19 +195,18 @@ shiny::shinyServer(function(input, output, session) {
   output$tree <- renderPlot({
     fname <- re.filename_tree() 
     l_ind <- match(fname,parms$labels)
-    #plot.phylo(parms$tree[[l_ind]],show.tip.label = F)
     quick_region_treeplot(parms$tree[[l_ind]],'England')
   })
   
   output$sequences <- renderDataTable({
     #fname <- re.filename_tree() 
     #l_ind <- match(fname,parms$labels)
-    datatable(parms$sequences,options = list("pageLength" = 400))
+    datatable(parms$sequences,options = list("pageLength" = 500))
     
   })
   
   output$legend <- renderPlot({
-    par(mar=c(0,0,0,0)); plot.new()
+    par(mar=c(0,0,0,0)); plot.new()#plot(c(0,1),c(0,1)); 
     legend(x=0,y=1,col=unique(parms$cols),lwd=3,bty='n',
            legend=unique(parms$p614),cex=1.25,title='aa 614')
   })
