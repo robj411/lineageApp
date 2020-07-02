@@ -17,8 +17,9 @@ shinyUI(
              <h1>UK Lineages</h1>
              <p>This web application shows features of UK lineages constructed using <a href='https://github.com/emvolz-phylodynamics/sarscov2Rutils' target='_blank'>sarscov2Rutils</a>. 
              Graphs show the time-dependent effective reproduction number (the average number of secondary cases per primary case over time), the effective population size (the number of individuals weighted by their contribution to producing the next generation) and the effective growth rate. </p>
-             <p>With D/G/X annotations from
-             <a href='https://microreact.org/project/cogconsortium-2020-06-19/da7c0270/' target='_blank'> https://microreact.org/project/cogconsortium-2020-06-19/da7c0270/</a>.</p>
+             <p>Lineages are currently annotated as D/G from
+             <a href='https://microreact.org/project/cogconsortium-2020-06-19/da7c0270/' target='_blank'> 
+https://microreact.org/project/cogconsortium-2020-06-19/da7c0270/</a>.</p>
              <p>Trees show the phylogeny contructed by <a href='https://cran.r-project.org/web/packages/treedater/index.html' target='_blank'>treedater</a>. Sequences lists the IDs and dates of the tree tips.</p>"
            )
     ),
