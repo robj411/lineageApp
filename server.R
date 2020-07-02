@@ -1,7 +1,7 @@
 library( lubridate )
 library( ggplot2 )
 library( shiny )
-library(sarscov2)
+#library(sarscov2)
 library(grid)
 #library(ape)
 #library(ggtree)
