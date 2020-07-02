@@ -1,5 +1,6 @@
 package_sources:
   github:
+    - YuLab-SMU/treeio
     - YuLab-SMU/ggtree
 
 packages:
