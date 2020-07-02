@@ -1,9 +1,12 @@
+package_sources:
+  github:
+    - YuLab-SMU/ggtree
+
 packages:
   - DT
   - ggplot2
   - grid
   - lubridate
-  - remotes
   - scales
   - shiny
   - shinyjs

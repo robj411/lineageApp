@@ -3,11 +3,8 @@ library( shiny )
 #library(sarscov2)
 library(grid)
 #library(ape)
-library(remotes)
 library(DT)
 library(scales)
-
-remotes::install_github("YuLab-SMU/ggtree",upgrade="never")
 library(ggtree)
 library( ggplot2 )
 
