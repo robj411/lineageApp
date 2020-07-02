@@ -11,6 +11,36 @@ library(scales)
 if(file.exists('datasets/lineageSetup.Rdata')){
   load('datasets/lineageSetup.Rdata')
 }else{
+  
+  quick_d614g_treeplot <- function( td , maxdate = NULL){ #date_decimal( max(tr$sts))
+    cols <- c('navyblue','turquoise','darkorange')
+    names(cols) <- c('D','G','X')
+    colScale <- scale_colour_manual(name = "g614d",values = cols)
+    tr = td 
+    class( tr ) = 'phylo'
+    btr = ggtree(tr, mrsd= maxdate, ladderize=TRUE)  + theme_tree2() 
+    #tipdeme <-  grepl( tr$tip.label, pat = region ) 
+    tipdata <- data.frame( 
+      taxa = tr$tip.label, 
+      d614g =  tr$d614g
+    )
+    tipdata$size <- .75
+    #tipdata$size[ !tipdata$d614g ] <- 0
+    #tipdata$d614g[ !tipdata$d614g ] <- NA
+    btr <- btr %<+% tipdata 
+    btr = btr + geom_tippoint( aes(color = d614g, size = size), na.rm=TRUE, show.legend=TRUE, size =1.25) 
+    #+ theme_tree2( legend.position = "none" )
+    
+    btr + colScale + theme(legend.position='top', 
+                           legend.justification='left',
+                           legend.direction='vertical',
+                           legend.title=element_text(size=14), 
+                           legend.text=element_text(size=12))#, 
+                           #legend.title = element_blank(), 
+                           #legend.key = element_blank()) #+ ggplot2::ggtitle( region )
+  }
+  
+  
   add_line <- function(pl,x1,metric='Ne',  date_limits = c( as.Date( '2020-02-01'), NA ),ci ,col,... ){
     y = x1[[metric]]
     pldf <- data.frame( Date =  as.Date( y$time ) , reported=FALSE )
@@ -70,6 +100,7 @@ if(file.exists('datasets/lineageSetup.Rdata')){
   ## store information
   trees <- list()
   sequences <- list()
+  metadata <- readRDS('datasets/lineage_metadata.Rds')
   for(i in 1:length(gtdsfiles)){
     x <- readRDS(paste0('datasets/skygrowth1/',gtdsfiles[i]))
     maxind <- which.max(sapply(x,function(y)y[[7]]))
@@ -78,9 +109,12 @@ if(file.exists('datasets/lineageSetup.Rdata')){
     colnames(sequences[[i]]) <- c('Sequence','Date','Lineage')
     sequences[[i]][,2] <- as.character(as.Date(date_decimal(as.numeric(as.character(sequences[[i]][,2])))))
     rownames(sequences[[i]]) <- NULL
+    trees[[i]]$d614g <- metadata$d614g[match(sequences[[i]]$Sequence,metadata$Sequence)] 
   }
   
   ## get genotypes
+  ##!! use old data to colour lineages
+  metadata <- readRDS('datasets/lineage_metadata.Rds')
   metadata <- read.csv('https://microreact.org/api/viewer/data?project=cogconsortium-2020-06-19')
   metadata <- subset(metadata,uk_lineage%in%ids)[,colnames(metadata)%in%c('uk_lineage','d614g')]
   #GDs <- sapply(ids,function(x){subx <- subset(metadata,uk_lineage==x);(unique(subx$d614g))})
@@ -96,6 +130,8 @@ if(file.exists('datasets/lineageSetup.Rdata')){
   ## save items
   parms <- list()
   parms$sequences <- do.call(rbind,sequences)
+  metadata <- readRDS('datasets/lineage_metadata.Rds')
+  parms$sequences$d614g <- metadata$d614g[match(parms$sequences$Sequence,metadata$Sequence)] 
   parms$tree <- trees
   parms$filename <- parms$filename_tree <- ids[1]
   parms$ids <- unname(ids)
@@ -106,7 +142,7 @@ if(file.exists('datasets/lineageSetup.Rdata')){
   parms$geno_labs <- paste0('All "',unique(parms$p614),'"')
   parms$track_geno_groups <- rep(0,length(parms$geno_labs))
   ## clear environment
-  rm(cols,files,gtdsfiles,i,ids,lineages,maxind,p614,sequences,trees,x)
+  rm(cols,files,gtdsfiles,i,ids,lineages,maxind,p614,sequences,trees,x,metadata,Ds,Gs)
   save(list=ls(),file= 'datasets/lineageSetup.Rdata')
 }
 
@@ -210,7 +246,7 @@ shiny::shinyServer(function(input, output, session) {
     l_ind <- match(fname,parms$labels)
     hgt <- length(parms$tree[[l_ind]]$Ti)
     output$tree <- renderPlot({
-      quick_region_treeplot(parms$tree[[l_ind]],'England')
+      quick_d614g_treeplot(parms$tree[[l_ind]])
     }, 
     height = 3*hgt+500)
   })
