@@ -72,7 +72,7 @@ https://microreact.org/project/cogconsortium-2020-06-19/da7c0270/</a>.</p>
                       #tableOutput("estimated_r_output")
                       fluidRow(
                         checkboxInput(inputId='show_all_sequences', label='Show all sequences', value=F),
-                        dataTableOutput(outputId = 'sequences')
+                        DT::dataTableOutput(outputId = 'sequences')
                         , style = "font-size:15px", align="left")
              )
            )

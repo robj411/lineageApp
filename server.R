@@ -253,7 +253,7 @@ shiny::shinyServer(function(input, output, session) {
   
   observe({
     show_all_sequences <- input$show_all_sequences
-    output$sequences <- renderDataTable({
+    output$sequences <- DT::renderDataTable({
       tab <- parms$sequences
       if(!show_all_sequences){
         fname <- re.filename_tree() 
