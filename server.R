@@ -4,9 +4,12 @@ library( shiny )
 #library(sarscov2)
 library(grid)
 #library(ape)
-library(ggtree)
+library(remotes)
 library(DT)
 library(scales)
+
+remotes::install_github("YuLab-SMU/ggtree",upgrade="never")
+library(ggtree)
 
 if(file.exists('datasets/lineageSetup.Rdata')){
   load('datasets/lineageSetup.Rdata')

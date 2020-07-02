@@ -1,9 +1,9 @@
 packages:
   - DT
   - ggplot2
-  - ggtree
   - grid
   - lubridate
+  - remotes
   - scales
   - shiny
   - shinyjs
