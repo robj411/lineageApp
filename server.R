@@ -1,5 +1,4 @@
 library( lubridate )
-library( ggplot2 )
 library( shiny )
 #library(sarscov2)
 library(grid)
@@ -10,6 +9,7 @@ library(scales)
 
 remotes::install_github("YuLab-SMU/ggtree",upgrade="never")
 library(ggtree)
+library( ggplot2 )
 
 if(file.exists('datasets/lineageSetup.Rdata')){
   load('datasets/lineageSetup.Rdata')
