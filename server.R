@@ -12,30 +12,49 @@ if(file.exists('datasets/lineageSetup.Rdata')){
   load('datasets/lineageSetup.Rdata')
 }else{
   
-  quick_d614g_treeplot <- function( td , maxdate = NULL){ #date_decimal( max(tr$sts))
-    cols <- c('navyblue','turquoise','darkorange')
-    names(cols) <- c('D','G','X')
-    colScale <- scale_colour_manual(name = "g614d",values = cols)
+  quick_annotated_treeplot <- function( td , annotation='d614g', maxdate = NULL){ #date_decimal( max(tr$sts))
     tr = td 
+    if(annotation=='d614g') {
+      cols <- c('navyblue','turquoise','darkorange')
+      names(cols) <- c('D','G','X')
+      leg.dir <- "vertical"
+      shapes <- rep(19,3)
+    }else{
+      len <- length(unique(tr$data[[annotation]]))
+      if(len<10){
+        cols <- rainbow(len)
+        names(cols) <- unique(tr$data[[annotation]])
+        shapes <- rep(19,len)
+      }else{
+        reps <- ceiling(len/4)
+        cols <- rep(rainbow(reps),times=4)[1:len]
+        names(cols) <- unique(tr$data[[annotation]])
+        shapes <- rep(c(15:18),each=reps)[1:len]
+        names(shapes) <- unique(tr$data[[annotation]])
+      }
+      leg.dir <- "horizontal"
+    }
+    colScale <- scale_colour_manual(name = annotation,values = cols)
+    shapeScale <- scale_shape_manual(name = annotation,values = shapes) 
     class( tr ) = 'phylo'
     btr = ggtree(tr, mrsd= maxdate, ladderize=TRUE)  + theme_tree2() 
     #tipdeme <-  grepl( tr$tip.label, pat = region ) 
     tipdata <- data.frame( 
       taxa = tr$tip.label, 
-      d614g =  tr$d614g
+      anno =  tr$data[[annotation]]
     )
     tipdata$size <- .75
     #tipdata$size[ !tipdata$d614g ] <- 0
     #tipdata$d614g[ !tipdata$d614g ] <- NA
     btr <- btr %<+% tipdata 
-    btr = btr + geom_tippoint( aes(color = d614g, size = size), na.rm=TRUE, show.legend=TRUE, size =1.25) 
+    btr = btr + geom_tippoint( aes(color = anno, pch=anno, size = size), na.rm=TRUE, show.legend=TRUE, size =1.5) 
     #+ theme_tree2( legend.position = "none" )
     
-    btr + colScale + theme(legend.position='top', 
+    btr + colScale + shapeScale + theme(legend.position='top', 
                            legend.justification='left',
-                           legend.direction='vertical',
                            legend.title=element_text(size=14), 
-                           legend.text=element_text(size=12))#, 
+                           legend.text=element_text(size=12),
+                           legend.direction=leg.dir)#, 
                            #legend.title = element_blank(), 
                            #legend.key = element_blank()) #+ ggplot2::ggtitle( region )
   }
@@ -58,7 +77,7 @@ if(file.exists('datasets/lineageSetup.Rdata')){
   
   gg_sarscov2skygrowth <- function(x, metric='growth', log_size=F,date_limits = c( as.Date( '2020-03-01'), NA ) ,ci,col,... )
   {
-    stopifnot( inherits( x, 'sarscov2skygrowth' ))
+    #stopifnot( inherits( x, 'sarscov2skygrowth' ))
     y = x[[metric]]
     taxis = as.Date( y$time )
     
@@ -109,7 +128,7 @@ if(file.exists('datasets/lineageSetup.Rdata')){
     colnames(sequences[[i]]) <- c('Sequence','Date','Lineage')
     sequences[[i]][,2] <- as.character(as.Date(date_decimal(as.numeric(as.character(sequences[[i]][,2])))))
     rownames(sequences[[i]]) <- NULL
-    trees[[i]]$d614g <- metadata$d614g[match(sequences[[i]]$Sequence,metadata$Sequence)] 
+    trees[[i]]$data <- metadata[match(sequences[[i]]$Sequence,metadata$Sequence),] 
   }
   
   ## get genotypes
@@ -132,6 +151,7 @@ if(file.exists('datasets/lineageSetup.Rdata')){
   parms$sequences <- do.call(rbind,sequences)
   metadata <- readRDS('datasets/lineage_metadata.Rds')
   parms$sequences$d614g <- metadata$d614g[match(parms$sequences$Sequence,metadata$Sequence)] 
+  parms$sequences$location <- metadata$adm2[match(parms$sequences$Sequence,metadata$Sequence)] 
   parms$tree <- trees
   parms$filename <- parms$filename_tree <- ids[1]
   parms$ids <- unname(ids)
@@ -141,21 +161,67 @@ if(file.exists('datasets/lineageSetup.Rdata')){
   parms$labels <- paste0(ids,' (',p614,')')
   parms$geno_labs <- paste0('All "',unique(parms$p614),'"')
   parms$track_geno_groups <- rep(0,length(parms$geno_labs))
+  
+  ## create combined
+  DGSlist <- list('D','G',c('D','G'))
+  parms$all_combined <- lapply(1:length(DGSlist),function(dg){
+    all_combined <- list()
+    for(metric in c('growth','R','Ne')){
+      
+      blocks <- list()
+      for(i in 1:length(lineages)){
+        if(parms$p614[i]%in%DGSlist[[dg]])
+          blocks[[length(blocks)+1]] <- lineages[[i]][[metric]]
+      }
+      combined <- do.call(rbind,blocks)
+      daytimes <- combined$time
+      combined$days <- sapply(daytimes,function(x)strsplit(as.character(x),' ')[[1]][1])
+      uniquetimes <- unique(combined$days)
+      combined$var = ((combined$pc97.5-combined$pc2.5)/2/qnorm(0.975))^2
+      if(metric=='Ne'){
+        combined$var <- (pmin(abs(combined$pc97.5-combined$pc50),abs(combined$pc2.5-combined$pc50),na.rm=T)/qnorm(0.975))^2
+      }
+      grouptraj <- as.data.frame(t(sapply(uniquetimes,function(j){
+        temp <- subset(combined,days==j)
+        mu <- mean(temp$pc50)
+        sd <- sqrt(sum(temp$var)/nrow(temp)^2)
+        if(metric=='Ne') {
+          out <- c()
+          temp <- subset(temp,!is.na(pc97.5))
+          for(i in 1:1000) out[i] <- sum((rnorm(nrow(temp),mean=temp$pc50,sd=sqrt(temp$var))))
+          c(j,quantile(out,c(0.025,0.5,0.975)))
+        }else{
+          c(j,qnorm(c(0.025,0.5,0.975),mean=mu,sd=sd))
+        }
+      })))
+      colnames(grouptraj) <- colnames(blocks[[1]])
+      for(i in 2:4) grouptraj[,i] <- as.numeric(as.character(grouptraj[,i]))
+      grouptraj[,1] <- as.Date(grouptraj[,1])
+      neworder <- sort.int(grouptraj[,1],decreasing = F,index.return = T)
+      all_combined[[metric]] <- grouptraj[neworder$ix,]
+    }
+    all_combined
+  })
+  
   ## clear environment
-  rm(cols,files,gtdsfiles,i,ids,lineages,maxind,p614,sequences,trees,x,metadata,Ds,Gs)
+  rm(cols,files,gtdsfiles,i,ids,lineages,maxind,p614,sequences,trees,x,metadata,Ds,Gs,DGSlist)
   save(list=ls(),file= 'datasets/lineageSetup.Rdata')
 }
 
 
 shiny::shinyServer(function(input, output, session) {
   ## initialise checkboxes
+  combined_labs <- c('Combined "D"','Combined "G"','Combined "D" and "G"')
   updateCheckboxGroupInput(session, inputId='ti_DGX', label='Genotypes', choices = parms$geno_labs)
+  updateCheckboxGroupInput(session, inputId='ti_groups', label='', choices = combined_labs)
   updateCheckboxGroupInput(session, inputId='ti_filename', label = 'Lineages', choices = parms$labels, selected = parms$labels[which(parms$ids=='UK5')])
-  updateSelectInput(session, inputId='ti_filename_tree', label = '', choices = parms$labels, selected = parms$labels[which(parms$ids=='UK5')])
+  updateSelectInput(session, inputId='ti_filename_tree', label = 'Lineage', choices = parms$labels, selected = parms$labels[which(parms$ids=='UK5')])
   re.filename <- reactiveVal( parms$filename )
   re.filename_tree <- reactiveVal( parms$filename_tree )
+  re.tree_colour <- reactiveVal( 'Genotype' )
   re.ci <- reactiveVal( 1 )
   re.DGX <- reactiveVal( NULL )
+  re.DGXgroup <- reactiveVal( NULL )
   re.log_size <- reactiveVal( F )
   
   ## observe input events
@@ -167,6 +233,11 @@ shiny::shinyServer(function(input, output, session) {
   observeEvent( input$ti_log_size, {
     re.log_size( input$ti_log_size )
   })
+  
+  ## plot all D or all G?
+  observeEvent( input$ti_groups, {
+    re.DGXgroup( input$ti_groups )
+  }, ignoreNULL = FALSE)
   
   ## plot all D or all G?
   observeEvent( input$ti_DGX, {
@@ -204,6 +275,11 @@ shiny::shinyServer(function(input, output, session) {
     updateCheckboxGroupInput(session,"ti_filename",selected=unique(c(input$ti_filename_tree,input$ti_filename)))
   })
   
+  ## how to colour the tree tips
+  observeEvent( input$ti_tree_colour, {
+    re.tree_colour( input$ti_tree_colour )
+  })
+  
   ## plot outputs
   update_lineage <- reactive({
     fname <- re.filename() 
@@ -215,17 +291,33 @@ shiny::shinyServer(function(input, output, session) {
   prep_plot <- function(metric='growth'){
     ci <- re.ci() 
     log_size <- metric=='Ne' & re.log_size()
-    lin <- update_lineage()
-    sgs <- lin[[1]]
-    ids <- lin[[2]]
-    req(inherits(sgs[[1]], "sarscov2skygrowth"))
-    p0 <- gg_sarscov2skygrowth(sgs[[1]],metric=metric,log_size=log_size,date_limits=c( as.Date( '2020-02-01'), NA ) ,ci,parms$cols[lin[[2]][1]])
-    if(length(ids)>1){
-      for(i in 2:length(ids)){
-        p0 <- add_line(p0,sgs[[i]],metric=metric,date_limits=c( as.Date( '2020-02-01'), NA ) ,ci,parms$cols[lin[[2]][i]])
+    groups <- input$ti_groups
+    if(is.null(groups)){
+      lin <- update_lineage()
+      sgs <- lin[[1]]
+      ids <- lin[[2]]
+      req(inherits(sgs[[1]], "sarscov2skygrowth"))
+      p0 <- gg_sarscov2skygrowth(sgs[[1]],metric=metric,log_size=log_size,date_limits=c( as.Date( '2020-02-01'), NA ) ,ci,parms$cols[lin[[2]][1]])
+      if(length(ids)>1){
+        for(i in 2:length(ids)){
+          p0 <- add_line(p0,sgs[[i]],metric=metric,date_limits=c( as.Date( '2020-02-01'), NA ) ,ci,parms$cols[lin[[2]][i]])
+        }
       }
+      return(p0)
+    }else{
+      indices <- match(groups,combined_labs)
+      p0 <- gg_sarscov2skygrowth(parms$all_combined[[indices[1]]],
+                                 metric=metric,log_size=log_size,date_limits=c( as.Date( '2020-02-01'), NA ) ,ci,
+                                 c('navyblue','turquoise','darkorange')[indices[1]])
+      if(length(indices)>1){
+        for(i in 2:length(indices)){
+          p0 <- add_line(p0,parms$all_combined[[indices[i]]],
+                         metric=metric,date_limits=c( as.Date( '2020-02-01'), NA ) ,ci,
+                         c('navyblue','turquoise','darkorange')[indices[i]])
+        }
+      }
+      return(p0)
     }
-    p0
   }
   
   output$GR <- renderPlot({
@@ -242,11 +334,14 @@ shiny::shinyServer(function(input, output, session) {
   
   ## plot tree with height depending on number of sequences
   observe({
+    anno <- 'd614g'
+    if(re.tree_colour()=='Location') anno <- 'location'
+    if(re.tree_colour()=='Country') anno <- 'country'
     fname <- re.filename_tree() 
     l_ind <- match(fname,parms$labels)
     hgt <- length(parms$tree[[l_ind]]$Ti)
     output$tree <- renderPlot({
-      quick_d614g_treeplot(parms$tree[[l_ind]])
+      quick_annotated_treeplot(parms$tree[[l_ind]],annotation = anno)
     }, 
     height = 3*hgt+500)
   })

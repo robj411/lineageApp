@@ -20,7 +20,7 @@ shinyUI(
              <p>Lineages are currently annotated as D/G from
              <a href='https://microreact.org/project/cogconsortium-2020-06-19/da7c0270/' target='_blank'> 
 https://microreact.org/project/cogconsortium-2020-06-19/da7c0270/</a>.</p>
-             <p>Trees show the phylogeny contructed by <a href='https://cran.r-project.org/web/packages/treedater/index.html' target='_blank'>treedater</a>. Sequences lists the IDs and dates of the tree tips.</p>"
+             <p>Trees show phylogenies contructed by <a href='https://cran.r-project.org/web/packages/treedater/index.html' target='_blank'>treedater</a>. Sequences lists the IDs and dates of the tree tips.</p>"
            )
     ),
     
@@ -42,6 +42,7 @@ https://microreact.org/project/cogconsortium-2020-06-19/da7c0270/</a>.</p>
                                      checkboxInput('ti_ci', label = "Credible intervals", 1),
                                      checkboxInput(inputId='ti_log_size', label='Effective size on log scale', value=F)
                                      , checkboxGroupInput(inputId='ti_DGX', label='Genotypes', choices = NULL, selected = NULL)
+                                     , checkboxGroupInput(inputId='ti_groups', label='', choices = NULL, selected = NULL)
                                      , checkboxGroupInput(inputId='ti_filename', label='Lineages', choices = NULL, selected = NULL)
                                      
                                  )
@@ -64,7 +65,8 @@ https://microreact.org/project/cogconsortium-2020-06-19/da7c0270/</a>.</p>
              tabPanel("Tree",
                       #downloadButton("save_incidence",
                       #               "Save Table"),
-                      selectInput('ti_filename_tree', label = '', NULL),
+                      selectInput('ti_filename_tree', label = 'Lineage', NULL),
+                      selectInput('ti_tree_colour', label = 'Colour by', choices=c('Genotype','Country','Location'),selected='Genotype'),
                       fluidRow( plotOutput( 'tree', width = "100%", height = "auto"), align="right")
              ),
              tabPanel("Sequences",
