@@ -37,7 +37,8 @@ if(file.exists('datasets/lineageSetup.Rdata')){
     colScale <- scale_colour_manual(name = annotation,values = cols)
     shapeScale <- scale_shape_manual(name = annotation,values = shapes) 
     class( tr ) = 'phylo'
-    btr = ggtree(tr, mrsd= maxdate, ladderize=TRUE)  + theme_tree2() 
+    maxdate <- date_decimal( max(parms$tree[[1]]$sts))
+    btr = ggtree(tr, mrsd= maxdate, ladderize=TRUE, as.Date=T)  + theme_tree2() 
     #tipdeme <-  grepl( tr$tip.label, pat = region ) 
     tipdata <- data.frame( 
       taxa = tr$tip.label, 
@@ -48,13 +49,13 @@ if(file.exists('datasets/lineageSetup.Rdata')){
     #tipdata$d614g[ !tipdata$d614g ] <- NA
     btr <- btr %<+% tipdata 
     btr = btr + geom_tippoint( aes(color = anno, pch=anno, size = size), na.rm=TRUE, show.legend=TRUE, size =1.5) 
-    #+ theme_tree2( legend.position = "none" )
     
     btr + colScale + shapeScale + theme(legend.position='top', 
                            legend.justification='left',
                            legend.title=element_text(size=14), 
                            legend.text=element_text(size=12),
-                           legend.direction=leg.dir)#, 
+                           legend.direction=leg.dir,
+                           axis.text=element_text(size=12))#, 
                            #legend.title = element_blank(), 
                            #legend.key = element_blank()) #+ ggplot2::ggtitle( region )
   }
