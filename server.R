@@ -7,10 +7,42 @@ library(DT)
 library(scales)
 library(ggtree)
 library( ggplot2 )
+library(plotly)
 
 if(file.exists('datasets/lineageSetup.Rdata')){
   load('datasets/lineageSetup.Rdata')
 }else{
+  
+  geom_tippoint <- function (mapping = NULL, data = NULL, position = "identity", 
+                             na.rm = FALSE, show.legend = NA, inherit.aes = TRUE, ...) {
+    self_mapping <- aes_(node = ~node, subset = ~isTip)
+    if (is.null(mapping)) {
+      mapping <- self_mapping
+    }else {
+      if (!is.null(mapping$subset)) {
+        self_mapping <- aes_string(node = "node", subset = paste0(as.expression(get_aes_var(mapping, "subset")), "&isTip"))
+      }
+      mapping <- modifyList(self_mapping, mapping)
+    }
+    geom_point2(mapping, data, position, na.rm, show.legend, 
+                inherit.aes, stat = ggtree:::StatTreeData, ...)
+  }
+  
+  
+  
+  
+  geom_point2 <- function (mapping = NULL, data = NULL, stat = "identity", position = "identity", 
+                           na.rm = FALSE, show.legend = NA, inherit.aes = TRUE, ...) {
+    default_aes <- aes_()
+    if (is.null(mapping)) {
+      mapping <- default_aes
+    } else {
+      mapping <- modifyList(mapping, default_aes)
+    }
+    layer(data = data, mapping = mapping, stat = stat, geom = GeomPoint, 
+          position = position, show.legend = show.legend, inherit.aes = inherit.aes, 
+          params = list(na.rm = na.rm, ...), check.aes = FALSE)
+  }
   
   quick_annotated_treeplot <- function( td , annotation='d614g', maxdate = NULL){ #date_decimal( max(tr$sts))
     tr = td 
@@ -37,7 +69,7 @@ if(file.exists('datasets/lineageSetup.Rdata')){
     colScale <- scale_colour_manual(name = annotation,values = cols)
     shapeScale <- scale_shape_manual(name = annotation,values = shapes) 
     class( tr ) = 'phylo'
-    maxdate <- date_decimal( max(parms$tree[[1]]$sts))
+    maxdate <- date_decimal( max(tr$sts))
     btr = ggtree(tr, mrsd= maxdate, ladderize=TRUE, as.Date=T)  + theme_tree2() 
     #tipdeme <-  grepl( tr$tip.label, pat = region ) 
     tipdata <- data.frame( 
@@ -50,7 +82,7 @@ if(file.exists('datasets/lineageSetup.Rdata')){
     btr <- btr %<+% tipdata 
     btr = btr + geom_tippoint( aes(color = anno, pch=anno, size = size), na.rm=TRUE, show.legend=TRUE, size =1.5) 
     
-    btr + colScale + shapeScale + theme(legend.position='top', 
+    btr = btr + colScale + shapeScale + theme(legend.position='top', 
                            legend.justification='left',
                            legend.title=element_text(size=14), 
                            legend.text=element_text(size=12),
@@ -58,6 +90,8 @@ if(file.exists('datasets/lineageSetup.Rdata')){
                            axis.text=element_text(size=12))#, 
                            #legend.title = element_blank(), 
                            #legend.key = element_blank()) #+ ggplot2::ggtitle( region )
+    
+    btr#ggplotly(btr)
   }
   
   
@@ -342,7 +376,8 @@ shiny::shinyServer(function(input, output, session) {
     l_ind <- match(fname,parms$labels)
     hgt <- length(parms$tree[[l_ind]]$Ti)
     output$tree <- renderPlot({
-      quick_annotated_treeplot(parms$tree[[l_ind]],annotation = anno)
+      #output$tree <- renderPlotly({
+      quick_annotated_treeplot(parms$tree[[l_ind]],annotation = anno) # %>% layout(height = 3*hgt+500)
     }, 
     height = 3*hgt+500)
   })
