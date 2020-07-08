@@ -10,7 +10,7 @@ library( ggplot2 )
 library(plotly)
 
 if(file.exists('datasets/lineageSetup.Rdata')){
-  load('datasets/lineageSetup.Rdata')
+  load('datasets/lineageSetup.Rdata', envir = .GlobalEnv)
 }else{
   
   geom_tippoint <- function (mapping = NULL, data = NULL, position = "identity", 
@@ -24,14 +24,19 @@ if(file.exists('datasets/lineageSetup.Rdata')){
       }
       mapping <- modifyList(self_mapping, mapping)
     }
-    geom_point2(mapping, data, position, na.rm, show.legend, 
+    geom_point3(mapping, data, position, na.rm, show.legend, 
                 inherit.aes, stat = ggtree:::StatTreeData, ...)
   }
   
+  GeomPointGGtree <- ggproto("GeomPoint", GeomPoint,
+                             setup_data = function(data, params) {
+                               if (is.null(data$subset))
+                                 return(data)
+                               data[which(data$subset),]
+                             })
   
   
-  
-  geom_point2 <- function (mapping = NULL, data = NULL, stat = "identity", position = "identity", 
+  geom_point3 <- function (mapping = NULL, data = NULL, stat = "identity", position = "identity", 
                            na.rm = FALSE, show.legend = NA, inherit.aes = TRUE, ...) {
     default_aes <- aes_()
     if (is.null(mapping)) {
@@ -39,20 +44,20 @@ if(file.exists('datasets/lineageSetup.Rdata')){
     } else {
       mapping <- modifyList(mapping, default_aes)
     }
-    layer(data = data, mapping = mapping, stat = stat, geom = GeomPoint, 
+    layer(data = data, mapping = mapping, stat = stat, geom = GeomPointGGtree, #GeomPoint, 
           position = position, show.legend = show.legend, inherit.aes = inherit.aes, 
           params = list(na.rm = na.rm, ...), check.aes = FALSE)
   }
   
   quick_annotated_treeplot <- function( td , annotation='d614g', maxdate = NULL){ #date_decimal( max(tr$sts))
     tr = td 
+    len <- length(unique(tr$data[[annotation]]))
     if(annotation=='d614g') {
       cols <- c('navyblue','turquoise','darkorange')
       names(cols) <- c('D','G','X')
       leg.dir <- "vertical"
       shapes <- rep(19,3)
     }else{
-      len <- length(unique(tr$data[[annotation]]))
       if(len<10){
         cols <- rainbow(len)
         names(cols) <- unique(tr$data[[annotation]])
@@ -70,28 +75,37 @@ if(file.exists('datasets/lineageSetup.Rdata')){
     shapeScale <- scale_shape_manual(name = annotation,values = shapes) 
     class( tr ) = 'phylo'
     maxdate <- date_decimal( max(tr$sts))
-    btr = ggtree(tr, mrsd= maxdate, ladderize=TRUE, as.Date=T)  + theme_tree2() 
     #tipdeme <-  grepl( tr$tip.label, pat = region ) 
     tipdata <- data.frame( 
       taxa = tr$tip.label, 
-      anno =  tr$data[[annotation]]
+      anno =  tr$data[[annotation]],
+      text = paste0(tr$data$d614g,' / ',tr$data$location,' / ',tr$data$Date)
     )
     tipdata$size <- .75
     #tipdata$size[ !tipdata$d614g ] <- 0
     #tipdata$d614g[ !tipdata$d614g ] <- NA
+    btr = ggtree(tr, mrsd= maxdate, ladderize=TRUE, as.Date=T)  + theme_tree2() 
     btr <- btr %<+% tipdata 
-    btr = btr + geom_tippoint( aes(color = anno, pch=anno, size = size), na.rm=TRUE, show.legend=TRUE, size =1.5) 
+    btr = btr + geom_tippoint( aes(color = anno, pch=anno, size = size, text=text), na.rm=TRUE, show.legend=TRUE, size =1.5) 
     
     btr = btr + colScale + shapeScale + theme(legend.position='top', 
                            legend.justification='left',
                            legend.title=element_text(size=14), 
                            legend.text=element_text(size=12),
-                           legend.direction=leg.dir,
-                           axis.text=element_text(size=12))#, 
-                           #legend.title = element_blank(), 
-                           #legend.key = element_blank()) #+ ggplot2::ggtitle( region )
-    
-    btr#ggplotly(btr)
+                           #legend.direction=leg.dir,
+                           axis.text=element_text(size=12)) +
+      scale_x_date(date_labels = "%Y/%m/%d")
+
+        ## add some space under legend otherwise it covers tree
+    hgt <- length(tr$Ti)
+    height = 3*hgt + 1000 + ceiling(len/7)*20
+    yval <- 1.12+ceiling(len/7)*0.005 - hgt/13000 #ceiling(len/7)/10
+    btrplotly <- ggplotly(btr,height=height, tooltip = "text") %>%
+      layout(legend = list(orientation = "h",xanchor='center',
+                           yanchor='top',
+                           x=0.4,y=yval)) %>%
+      config(displayModeBar = F) 
+    btrplotly
   }
   
   
@@ -374,12 +388,12 @@ shiny::shinyServer(function(input, output, session) {
     if(re.tree_colour()=='Country') anno <- 'country'
     fname <- re.filename_tree() 
     l_ind <- match(fname,parms$labels)
-    hgt <- length(parms$tree[[l_ind]]$Ti)
-    output$tree <- renderPlot({
-      #output$tree <- renderPlotly({
-      quick_annotated_treeplot(parms$tree[[l_ind]],annotation = anno) # %>% layout(height = 3*hgt+500)
-    }, 
-    height = 3*hgt+500)
+    #hgt <- length(parms$tree[[l_ind]]$Ti)
+    #output$tree <- renderPlot({
+    output$tree <- renderPlotly({
+      quick_annotated_treeplot(parms$tree[[l_ind]],annotation = anno) #%>% layout(height = 3*hgt+500)
+    })#, 
+    #height = 3*hgt+500)
   })
   
   observe({

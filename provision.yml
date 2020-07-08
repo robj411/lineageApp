@@ -9,6 +9,7 @@ packages:
   - ggtree
   - grid
   - lubridate
+  - plotly
   - scales
   - shiny
   - shinyjs
