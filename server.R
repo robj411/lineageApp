@@ -10,7 +10,7 @@ library( ggplot2 )
 library(plotly)
 
 if(file.exists('datasets/lineageSetup.Rdata')){
-  load('datasets/lineageSetup.Rdata', envir = .GlobalEnv)
+  load('datasets/lineageSetup.Rdata')
 }else{
   
   quick_annotated_treeplot <- function( td , annotation='d614g', maxdate = NULL){ #date_decimal( max(tr$sts))
