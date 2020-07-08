@@ -67,6 +67,10 @@ https://microreact.org/project/cogconsortium-2020-06-19/da7c0270/</a>.</p>
                       #               "Save Table"),
                       selectInput('ti_filename_tree', label = 'Lineage', NULL),
                       selectInput('ti_tree_colour', label = 'Colour by', choices=c('Genotype','Country','Location'),selected='Genotype'),
+                      HTML(
+                        "
+             <p>Click on legend names to isolate tree tips.</p>"
+                      ),
                       fluidRow( plotly::plotlyOutput( 'tree', width = "100%", height = "auto"), align="right")
                       #fluidRow( plotOutput( 'tree', width = "100%", height = "auto"), align="right")
              ),

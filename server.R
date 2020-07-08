@@ -13,42 +13,6 @@ if(file.exists('datasets/lineageSetup.Rdata')){
   load('datasets/lineageSetup.Rdata', envir = .GlobalEnv)
 }else{
   
-  geom_tippoint <- function (mapping = NULL, data = NULL, position = "identity", 
-                             na.rm = FALSE, show.legend = NA, inherit.aes = TRUE, ...) {
-    self_mapping <- aes_(node = ~node, subset = ~isTip)
-    if (is.null(mapping)) {
-      mapping <- self_mapping
-    }else {
-      if (!is.null(mapping$subset)) {
-        self_mapping <- aes_string(node = "node", subset = paste0(as.expression(get_aes_var(mapping, "subset")), "&isTip"))
-      }
-      mapping <- modifyList(self_mapping, mapping)
-    }
-    geom_point3(mapping, data, position, na.rm, show.legend, 
-                inherit.aes, stat = ggtree:::StatTreeData, ...)
-  }
-  
-  GeomPointGGtree <- ggproto("GeomPoint", GeomPoint,
-                             setup_data = function(data, params) {
-                               if (is.null(data$subset))
-                                 return(data)
-                               data[which(data$subset),]
-                             })
-  
-  
-  geom_point3 <- function (mapping = NULL, data = NULL, stat = "identity", position = "identity", 
-                           na.rm = FALSE, show.legend = NA, inherit.aes = TRUE, ...) {
-    default_aes <- aes_()
-    if (is.null(mapping)) {
-      mapping <- default_aes
-    } else {
-      mapping <- modifyList(mapping, default_aes)
-    }
-    layer(data = data, mapping = mapping, stat = stat, geom = GeomPointGGtree, #GeomPoint, 
-          position = position, show.legend = show.legend, inherit.aes = inherit.aes, 
-          params = list(na.rm = na.rm, ...), check.aes = FALSE)
-  }
-  
   quick_annotated_treeplot <- function( td , annotation='d614g', maxdate = NULL){ #date_decimal( max(tr$sts))
     tr = td 
     len <- length(unique(tr$data[[annotation]]))
@@ -63,10 +27,14 @@ if(file.exists('datasets/lineageSetup.Rdata')){
         names(cols) <- unique(tr$data[[annotation]])
         shapes <- rep(19,len)
       }else{
-        reps <- ceiling(len/4)
-        cols <- rep(rainbow(reps),times=4)[1:len]
+        pchs <- c(15:18,25,5,4)
+        if(len<60)  pchs <- c(15:18,25,5)
+        if(len<50)  pchs <- c(15:18,25)
+        if(len<40)  pchs <- c(15:18)
+        reps <- ceiling(len/length(pchs))
+        cols <- rep(rainbow(reps),times=length(pchs))[1:len]
         names(cols) <- unique(tr$data[[annotation]])
-        shapes <- rep(c(15:18),each=reps)[1:len]
+        shapes <- rep(pchs,each=reps)[1:len]
         names(shapes) <- unique(tr$data[[annotation]])
       }
       leg.dir <- "horizontal"
@@ -84,11 +52,15 @@ if(file.exists('datasets/lineageSetup.Rdata')){
     tipdata$size <- .75
     #tipdata$size[ !tipdata$d614g ] <- 0
     #tipdata$d614g[ !tipdata$d614g ] <- NA
-    btr = ggtree(tr, mrsd= maxdate, ladderize=TRUE, as.Date=T)  + theme_tree2() 
+    btr = ggtree(tr, mrsd= maxdate, ladderize=TRUE, as.Date=T,aes(text=text))  + theme_tree2() 
     btr <- btr %<+% tipdata 
-    btr = btr + geom_tippoint( aes(color = anno, pch=anno, size = size, text=text), na.rm=TRUE, show.legend=TRUE, size =1.5) 
+    metat <- btr$data 
     
-    btr = btr + colScale + shapeScale + theme(legend.position='top', 
+    #btr = btr + geom_tippoint( aes(color = anno, pch=anno, size = size, text=text), na.rm=TRUE, show.legend=TRUE, size =1.5) 
+    btr = btr + geom_point( data=na.omit(metat),aes(color = anno, pch=anno)) 
+    
+    btr = btr + colScale + shapeScale +
+      theme(legend.position='top', 
                            legend.justification='left',
                            legend.title=element_text(size=14), 
                            legend.text=element_text(size=12),
