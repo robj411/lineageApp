@@ -389,7 +389,7 @@ shiny::shinyServer(function(input, output, session) {
   output$legend <- renderPlot({
     par(mar=c(0,0,0,0)); plot.new()#plot(c(0,1),c(0,1)); 
     legend(x=0,y=1,col=unique(parms$cols),lwd=3,bty='n',
-           legend=unique(parms$p614),cex=1.25,title='aa 614')
+           legend=unique(parms$p614),cex=1.25,title='S614 variant')
   })
   
   output 
