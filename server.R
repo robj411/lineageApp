@@ -12,7 +12,7 @@ library(plotly)
 if(file.exists('datasets/lineageSetup.Rdata')){
   load('datasets/lineageSetup.Rdata')
 }else{
-  
+  ## functions ##############################################################
   quick_annotated_treeplot <- function( td , annotation='d614g', maxdate = NULL){ #date_decimal( max(tr$sts))
     tr = td 
     len <- length(unique(tr$data[[annotation]]))
@@ -76,7 +76,8 @@ if(file.exists('datasets/lineageSetup.Rdata')){
       layout(legend = list(orientation = "h",xanchor='center',
                            yanchor='top',
                            x=0.4,y=yval)) %>%
-      config(displayModeBar = F) 
+      config(displayModeBar = F)   %>%
+         style(hoverinfo = "none", traces = 1:2)
     btrplotly
   }
   
@@ -131,6 +132,7 @@ if(file.exists('datasets/lineageSetup.Rdata')){
     pl
   }
   
+  ## prepare data ##########################################################
   ## get file names
   files <- list.files('datasets/skygrowth1/')
   gtdsfiles <- files[sapply(files,function(x)grepl('\\.gtds',x))]
@@ -167,12 +169,12 @@ if(file.exists('datasets/lineageSetup.Rdata')){
   p614[cols=='navyblue'] <- 'D'
   p614[cols=='turquoise'] <- 'G'
   
-  ## save items
+  ## store items
   parms <- list()
   parms$sequences <- do.call(rbind,sequences)
   metadata <- readRDS('datasets/lineage_metadata.Rds')
   parms$sequences$d614g <- metadata$d614g[match(parms$sequences$Sequence,metadata$Sequence)] 
-  parms$sequences$location <- metadata$adm2[match(parms$sequences$Sequence,metadata$Sequence)] 
+  parms$sequences$location <- metadata$location[match(parms$sequences$Sequence,metadata$Sequence)] 
   parms$tree <- trees
   parms$filename <- parms$filename_tree <- ids[1]
   parms$ids <- unname(ids)
@@ -183,7 +185,7 @@ if(file.exists('datasets/lineageSetup.Rdata')){
   parms$geno_labs <- paste0('All "',unique(parms$p614),'"')
   parms$track_geno_groups <- rep(0,length(parms$geno_labs))
   
-  ## create combined
+  ## create combined tree
   DGSlist <- list('D','G',c('D','G'))
   parms$all_combined <- lapply(1:length(DGSlist),function(dg){
     all_combined <- list()
@@ -224,6 +226,7 @@ if(file.exists('datasets/lineageSetup.Rdata')){
     all_combined
   })
   
+  ## save ######################################################################################
   ## clear environment
   rm(cols,files,gtdsfiles,i,ids,lineages,maxind,p614,sequences,trees,x,metadata,Ds,Gs,DGSlist)
   save(list=ls(),file= 'datasets/lineageSetup.Rdata')
@@ -237,6 +240,8 @@ shiny::shinyServer(function(input, output, session) {
   updateCheckboxGroupInput(session, inputId='ti_groups', label='', choices = combined_labs)
   updateCheckboxGroupInput(session, inputId='ti_filename', label = 'Lineages', choices = parms$labels, selected = parms$labels[which(parms$ids=='UK5')])
   updateSelectInput(session, inputId='ti_filename_tree', label = 'Lineage', choices = parms$labels, selected = parms$labels[which(parms$ids=='UK5')])
+  
+  ## initialise reactive values
   re.filename <- reactiveVal( parms$filename )
   re.filename_tree <- reactiveVal( parms$filename_tree )
   re.tree_colour <- reactiveVal( 'Genotype' )
