@@ -412,7 +412,7 @@ shiny::shinyServer(function(input, output, session) {
     geog <- input$ti_hist
     geog_levels <- NULL
     if(geog!='Combined')
-      geog_levels <- sapply(input$ti_hist_level2,function(x)strsplit(as.character(x),' ')[[1]][1])
+      geog_levels <- sapply(input$ti_hist_level2,function(x)strsplit(as.character(x),' (')[[1]][1])
     output$hist_by_location <- renderPlot({
       hist_by_location(geog,geog_levels)
     })#, 
