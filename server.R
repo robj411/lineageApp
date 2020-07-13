@@ -407,6 +407,12 @@ shiny::shinyServer(function(input, output, session) {
     suppressWarnings(plot( prep_plot(metric='Ne')))
   })
   
+  output$legend <- renderPlot({
+    par(mar=c(0,0,0,0)); plot.new()#plot(c(0,1),c(0,1)); 
+    legend(x=0,y=1,col=unique(parms$cols),lwd=3,bty='n',
+           legend=unique(parms$p614),cex=1.25,title='S614 variant')
+  })
+  
   ## plot hist for geography
   observe({
     geog <- input$ti_hist
@@ -434,23 +440,27 @@ shiny::shinyServer(function(input, output, session) {
     #height = 3*hgt+500)
   })
   
+  
+  ## sequences: show all sequences button
   observe({
     show_all_sequences <- input$show_all_sequences
+    tab <- parms$sequences
+    if(!show_all_sequences){
+      fname <- re.filename_tree() 
+      l_ind <- match(fname,parms$labels)
+      tab <- subset(tab,Lineage%in%parms$ids[l_ind])
+    }
     output$sequences <- DT::renderDataTable({
-      tab <- parms$sequences
-      if(!show_all_sequences){
-        fname <- re.filename_tree() 
-        l_ind <- match(fname,parms$labels)
-        tab <- subset(tab,Lineage%in%parms$ids[l_ind])
-      }
       datatable(tab,options = list("pageLength" = 500))
     })
-  })
-  
-  output$legend <- renderPlot({
-    par(mar=c(0,0,0,0)); plot.new()#plot(c(0,1),c(0,1)); 
-    legend(x=0,y=1,col=unique(parms$cols),lwd=3,bty='n',
-           legend=unique(parms$p614),cex=1.25,title='S614 variant')
+    ## sequences: download button
+    output$save_table <- downloadHandler(
+      filename = function() { 
+        paste("dataset-", Sys.Date(), ".csv", sep="")
+      },
+      content = function(file) {
+        write.csv(tab, file)
+      })
   })
   
   output 

@@ -36,9 +36,7 @@ CoG-UK</a>.</p>
                                      #checkboxGroupInput(inputId='ti_filename', label='Lineages', choices = NULL, selected = NULL)
                       ),
                       column(8, 
-                      #downloadButton("save_incidence",
-                      #               "Save Table"),
-                      fluidRow( plotOutput( 'hist_by_location', width = "100%", height = "600px"), align="right")
+                        fluidRow( plotOutput( 'hist_by_location', width = "100%", height = "600px"), align="right")
                       )
              ),
              tabPanel("Trajectories",
@@ -74,7 +72,7 @@ CoG-UK</a>.</p>
                       #fluidRow( plotOutput( 'tree', width = "100%", height = "auto"), align="right")
              ),
              tabPanel("Sequences",
-                      #downloadButton("save_r", "Save Table"),
+                      downloadButton("save_table", "Save table"),
                       #tableOutput("estimated_r_output")
                       fluidRow(
                         checkboxInput(inputId='show_all_sequences', label='Show all sequences', value=F),
