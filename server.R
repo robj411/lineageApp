@@ -148,11 +148,26 @@ if(file.exists('datasets/lineageSetup.Rdata')){
       geom_histogram(bins=30,alpha=0.5, position="identity", color="black")
     if(geog!='Combined') {
       plt <- plt + guides(fill=guide_legend(title=label_column)) + 
-      theme(legend.text=element_text(size=14),legend.title=element_text(size=14),legend.position="top")
+        theme(legend.text=element_text(size=14),legend.title=element_text(size=14),legend.position="top")
     }else{
       plt <- plt + guides(fill=FALSE)
     }
     plt + xlab('Date') + ylab ('Count') +
+      theme(axis.text=element_text(size=14),axis.title=element_text(size=14) ,panel.grid.major = element_blank(), panel.grid.minor = element_blank(),  panel.background = element_blank())
+  }
+  
+  barplot_by_region <- function(lin,plotby='region'){
+    category <- c('Lineage','region')[which(c('Lineage','region')!=plotby)]
+    subseq <- parms$sequences[parms$sequences[[category]]==lin,]
+    plt <- ggplot(subseq, aes(x=eval(parse(text=plotby)))) +
+      geom_bar(color="black")
+    #if(geog!='Combined') {
+    #  plt <- plt + guides(fill=guide_legend(title=label_column)) + 
+    #    theme(legend.text=element_text(size=14),legend.title=element_text(size=14),legend.position="top")
+    #}else{
+      plt <- plt + guides(fill=FALSE)
+    #}
+    plt + xlab('') + ylab ('Count') + coord_flip() +
       theme(axis.text=element_text(size=14),axis.title=element_text(size=14) ,panel.grid.major = element_blank(), panel.grid.minor = element_blank(),  panel.background = element_blank())
   }
   
@@ -198,6 +213,7 @@ if(file.exists('datasets/lineageSetup.Rdata')){
   parms$sequences <- do.call(rbind,sequences)
   metadata <- readRDS('datasets/lineage_metadata.Rds')
   parms$sequences <- left_join(parms$sequences,metadata,by='Sequence')
+  print(subset(parms$sequences,is.na(region)))
   #parms$sequences$d614g <- metadata$d614g[match(parms$sequences$Sequence,metadata$Sequence)] 
   #parms$sequences$location <- metadata$location[match(parms$sequences$Sequence,metadata$Sequence)] 
   parms$tree <- trees
@@ -269,10 +285,14 @@ shiny::shinyServer(function(input, output, session) {
   updateCheckboxGroupInput(session, inputId='ti_groups', label='', choices = combined_labs)
   updateCheckboxGroupInput(session, inputId='ti_filename', label = 'Lineages', choices = parms$labels, selected = parms$labels[which(parms$ids=='UK5')])
   updateSelectInput(session, inputId='ti_filename_tree', label = 'Lineage', choices = parms$labels, selected = parms$labels[which(parms$ids=='UK5')])
+  updateSelectInput(session, inputId='ti_filename_region', label = 'Lineage', choices = parms$labels, selected = parms$labels[which(parms$ids=='UK5')])
+  updateSelectInput(session, inputId='ti_region', label = 'Region', choices = unique(parms$sequences$region), selected = 'london')
   
   ## initialise reactive values
   re.filename <- reactiveVal( parms$filename )
   re.filename_tree <- reactiveVal( parms$filename_tree )
+  re.region <- reactiveVal( 'london' )
+  re.filename_region <- reactiveVal( parms$filename_tree )
   re.tree_colour <- reactiveVal( 'Genotype' )
   re.hist <- reactiveVal( 'Combined' )
   re.ci <- reactiveVal( 1 )
@@ -289,6 +309,7 @@ shiny::shinyServer(function(input, output, session) {
   }
   
   ## observe input events
+  ## geography ########################################################
   ## which geography to hist
   observeEvent( input$ti_hist, {
     re.hist( input$ti_hist )
@@ -304,6 +325,20 @@ shiny::shinyServer(function(input, output, session) {
     if(geog=='Local authority')
       updateCheckboxGroupInput(session, inputId='ti_hist_level2', label = 'Local authority', choices = unique.narm(parms$sequences$lad), selected = 'city of london')
   })
+  
+  ## plot hist for geography
+  observe({
+    geog <- input$ti_hist
+    geog_levels <- NULL
+    if(geog!='Combined')
+      geog_levels <- sapply(input$ti_hist_level2,function(x)strsplit(as.character(x),' \\(')[[1]][1])
+    output$hist_by_location <- renderPlot({
+      hist_by_location(geog,geog_levels)
+    })#, 
+    #height = 3*hgt+500)
+  })
+  
+  ## skygrowth ########################################################
   ## plot credible intervals?
   observeEvent( input$ti_ci, {
     re.ci( input$ti_ci )
@@ -346,17 +381,6 @@ shiny::shinyServer(function(input, output, session) {
     ## if just one trajectory, update tree
     if(length(input$ti_filename)==1)
       updateSelectInput(session,"ti_filename_tree",selected=input$ti_filename)
-  })
-  
-  ## which filename is selected for tree?
-  observeEvent( input$ti_filename_tree, {
-    re.filename_tree( input$ti_filename_tree )
-    updateCheckboxGroupInput(session,"ti_filename",selected=unique(c(input$ti_filename_tree,input$ti_filename)))
-  })
-  
-  ## how to colour the tree tips
-  observeEvent( input$ti_tree_colour, {
-    re.tree_colour( input$ti_tree_colour )
   })
   
   ## plot outputs
@@ -417,16 +441,47 @@ shiny::shinyServer(function(input, output, session) {
            legend=unique(parms$p614),cex=1.25,title='S614 variant')
   })
   
-  ## plot hist for geography
+  ## lineage by region ########################################################
+  ## which region?
+  observeEvent( input$ti_region, {
+    re.region( input$ti_region )
+  })
+  
+  ## bar plot lineage by region
   observe({
-    geog <- input$ti_hist
-    geog_levels <- NULL
-    if(geog!='Combined')
-      geog_levels <- sapply(input$ti_hist_level2,function(x)strsplit(as.character(x),' \\(')[[1]][1])
-    output$hist_by_location <- renderPlot({
-      hist_by_location(geog,geog_levels)
-    })#, 
-    #height = 3*hgt+500)
+    region <- input$ti_region
+    
+    output$linbyregion <- renderPlot({
+      barplot_by_region(region,'Lineage')
+    })
+  })
+  
+  ## regions by lineage ########################################################
+  ## which lineage?
+  observeEvent( input$ti_filename_region, {
+    re.filename_region( input$ti_filename_region )
+  })
+  
+  ## bar plot lineage by region
+  observe({
+    lin <- sapply(input$ti_filename_region,function(x)strsplit(as.character(x),' \\(')[[1]][1])
+    
+    output$byregion <- renderPlot({
+      barplot_by_region(lin,'region')
+    })
+  })
+  
+  
+  ## tree ########################################################
+  ## which filename is selected for tree?
+  observeEvent( input$ti_filename_tree, {
+    re.filename_tree( input$ti_filename_tree )
+    updateCheckboxGroupInput(session,"ti_filename",selected=unique(c(input$ti_filename_tree,input$ti_filename)))
+  })
+  
+  ## how to colour the tree tips
+  observeEvent( input$ti_tree_colour, {
+    re.tree_colour( input$ti_tree_colour )
   })
   
   ## plot tree with height depending on number of sequences

@@ -42,13 +42,23 @@ CoG-UK</a>.</p>
                         fluidRow( plotOutput( 'hist_by_location', width = "100%", height = "600px"), align="right")
                       )
              ),
-             tabPanel("Lineages",
+             tabPanel("Lineages summarised",
                       downloadButton("save_lineage_table", "Save table"),
                       #tableOutput("estimated_r_output")
                       fluidRow(
                         #checkboxInput(inputId='show_all_sequences', label='Show all sequences', value=F),
                         DT::dataTableOutput(outputId = 'lineages')
                         , style = "font-size:15px", align="left")
+             ),
+             tabPanel("Lineages by region",
+                      fluidRow(
+                        selectInput('ti_region', label = 'Region', NULL)),
+                      fluidRow( plotOutput( 'linbyregion', width = "500px", height = "500px"), align="left")
+             ),
+             tabPanel("Regions by lineage",
+                      fluidRow(
+                        selectInput('ti_filename_region', label = 'Lineage', NULL)),
+                      fluidRow( plotOutput( 'byregion', width = "500px", height = "500px"), align="left")
              ),
              tabPanel("Skygrowth curves",
                       column(3, id = "menu",
