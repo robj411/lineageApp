@@ -4,6 +4,7 @@ package_sources:
     - YuLab-SMU/ggtree
 
 packages:
+  - dplyr
   - DT
   - ggplot2
   - ggtree
