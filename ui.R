@@ -39,7 +39,15 @@ CoG-UK</a>.</p>
                         fluidRow( plotOutput( 'hist_by_location', width = "100%", height = "600px"), align="right")
                       )
              ),
-             tabPanel("Trajectories",
+             tabPanel("Lineages",
+                      downloadButton("save_lineage_table", "Save table"),
+                      #tableOutput("estimated_r_output")
+                      fluidRow(
+                        #checkboxInput(inputId='show_all_sequences', label='Show all sequences', value=F),
+                        DT::dataTableOutput(outputId = 'lineages')
+                        , style = "font-size:15px", align="left")
+             ),
+             tabPanel("Skygrowth curves",
                       column(3, id = "menu",
                              div(id = "1.2",
                                  div(id = "incidence_data_type_error_box", class = "error_box",
@@ -59,7 +67,7 @@ CoG-UK</a>.</p>
                              , fluidRow( plotOutput( 'Ne', width = "100%", height = "300px" ) )),
                       column(3,plotOutput('legend'))
              ),
-             tabPanel("Tree",
+             tabPanel("Phylogenetic trees",
                       #downloadButton("save_incidence",
                       #               "Save Table"),
                       selectInput('ti_filename_tree', label = 'Lineage', NULL),
@@ -71,15 +79,7 @@ CoG-UK</a>.</p>
                       fluidRow( plotly::plotlyOutput( 'tree', width = "100%", height = "auto"), align="right")
                       #fluidRow( plotOutput( 'tree', width = "100%", height = "auto"), align="right")
              ),
-             tabPanel("Lineages",
-                      downloadButton("save_lineage_table", "Save table"),
-                      #tableOutput("estimated_r_output")
-                      fluidRow(
-                        #checkboxInput(inputId='show_all_sequences', label='Show all sequences', value=F),
-                        DT::dataTableOutput(outputId = 'lineages')
-                        , style = "font-size:15px", align="left")
-             ),
-             tabPanel("Sequences",
+             tabPanel("Sequence data",
                       downloadButton("save_table", "Save table"),
                       #tableOutput("estimated_r_output")
                       fluidRow(

@@ -148,7 +148,7 @@ if(file.exists('datasets/lineageSetup.Rdata')){
       geom_histogram(bins=30,alpha=0.5, position="identity", color="black")
     if(geog!='Combined') {
       plt <- plt + guides(fill=guide_legend(title=label_column)) + 
-      theme(legend.text=element_text(size=14),legend.title=element_text(size=14))
+      theme(legend.text=element_text(size=14),legend.title=element_text(size=14),legend.position="top")
     }else{
       plt <- plt + guides(fill=FALSE)
     }
@@ -446,7 +446,7 @@ shiny::shinyServer(function(input, output, session) {
   
   ## lineages
   output$lineages <- DT::renderDataTable({
-    datatable(parms$lineage_table,options = list("pageLength" = 500))
+    datatable(parms$lineage_table,options = list("pageLength" = 500),rownames=F)
   })
   
   ## lineages: download button
@@ -468,7 +468,7 @@ shiny::shinyServer(function(input, output, session) {
       tab <- subset(tab,Lineage%in%parms$ids[l_ind])
     }
     output$sequences <- DT::renderDataTable({
-      datatable(tab,options = list("pageLength" = 500))
+      datatable(tab,options = list("pageLength" = 500),rownames=F)
     })
     ## sequences: download button
     output$save_table <- downloadHandler(
