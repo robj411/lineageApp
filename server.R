@@ -8,6 +8,7 @@ library(scales)
 library(ggtree)
 library( ggplot2 )
 library(plotly)
+library(dplyr)
 
 if(file.exists('datasets/lineageSetup.Rdata')){
   load('datasets/lineageSetup.Rdata')
@@ -132,6 +133,29 @@ if(file.exists('datasets/lineageSetup.Rdata')){
     pl
   }
   
+  
+  hist_by_location <- function(geog,geog_levels){
+    subseq <- parms$sequences
+    label_column <- 1
+    if(geog=='Local authority'){ 
+      label_column <- 'lad'
+      subseq <- subseq[subseq[['lad']]%in%geog_levels,]
+    }else if(geog!='Combined'){
+      label_column <- tolower(geog)
+      subseq <- subseq[subseq[[tolower(geog)]]%in%geog_levels,]
+    }
+    plt <- ggplot(subseq, aes(x=as.Date(Date), fill=eval(parse(text=label_column)))) +
+      geom_histogram(bins=30,alpha=0.5, position="identity", color="black")
+    if(geog!='Combined') {
+      plt <- plt + guides(fill=guide_legend(title=label_column)) + 
+      theme(legend.text=element_text(size=14),legend.title=element_text(size=14))
+    }else{
+      plt <- plt + guides(fill=FALSE)
+    }
+    plt + xlab('Date') + ylab ('Count') +
+      theme(axis.text=element_text(size=14),axis.title=element_text(size=14) ,panel.grid.major = element_blank(), panel.grid.minor = element_blank(),  panel.background = element_blank())
+  }
+  
   ## prepare data ##########################################################
   ## get file names
   files <- list.files('datasets/skygrowth1/')
@@ -173,8 +197,9 @@ if(file.exists('datasets/lineageSetup.Rdata')){
   parms <- list()
   parms$sequences <- do.call(rbind,sequences)
   metadata <- readRDS('datasets/lineage_metadata.Rds')
-  parms$sequences$d614g <- metadata$d614g[match(parms$sequences$Sequence,metadata$Sequence)] 
-  parms$sequences$location <- metadata$location[match(parms$sequences$Sequence,metadata$Sequence)] 
+  parms$sequences <- left_join(parms$sequences,metadata,by='Sequence')
+  #parms$sequences$d614g <- metadata$d614g[match(parms$sequences$Sequence,metadata$Sequence)] 
+  #parms$sequences$location <- metadata$location[match(parms$sequences$Sequence,metadata$Sequence)] 
   parms$tree <- trees
   parms$filename <- parms$filename_tree <- ids[1]
   parms$ids <- unname(ids)
@@ -245,12 +270,36 @@ shiny::shinyServer(function(input, output, session) {
   re.filename <- reactiveVal( parms$filename )
   re.filename_tree <- reactiveVal( parms$filename_tree )
   re.tree_colour <- reactiveVal( 'Genotype' )
+  re.hist <- reactiveVal( 'Combined' )
   re.ci <- reactiveVal( 1 )
   re.DGX <- reactiveVal( NULL )
   re.DGXgroup <- reactiveVal( NULL )
   re.log_size <- reactiveVal( F )
   
+  ## unique with na.rm
+  unique.narm <- function(x,column='lad'){
+    nms <- sort(unique(x))
+    unnms <- nms[!is.na(nms)]
+    tallies <- sapply(unnms,function(x)sum(parms$sequences[[column]]==x,na.rm=T))
+    paste0(unnms,' (',tallies,')')
+  }
+  
   ## observe input events
+  ## which geography to hist
+  observeEvent( input$ti_hist, {
+    re.hist( input$ti_hist )
+    geog <- input$ti_hist
+    if(geog=='Combined')
+      updateCheckboxGroupInput(session, inputId='ti_hist_level2', label = '', NULL)
+    if(geog=='Country')
+      updateCheckboxGroupInput(session, inputId='ti_hist_level2', label = 'Country', choices = unique.narm(parms$sequences$country,'country'), selected = 'england')
+    if(geog=='Region')
+      updateCheckboxGroupInput(session, inputId='ti_hist_level2', label = 'Region', choices = unique.narm(parms$sequences$region,'region'), selected = 'london')
+    if(geog=='County')
+      updateCheckboxGroupInput(session, inputId='ti_hist_level2', label = 'County', choices = unique.narm(parms$sequences$county,'county'), selected = 'cambridgeshire')
+    if(geog=='Local authority')
+      updateCheckboxGroupInput(session, inputId='ti_hist_level2', label = 'Local authority', choices = unique.narm(parms$sequences$lad), selected = 'city of london')
+  })
   ## plot credible intervals?
   observeEvent( input$ti_ci, {
     re.ci( input$ti_ci )
@@ -356,6 +405,18 @@ shiny::shinyServer(function(input, output, session) {
   
   output$Ne <- renderPlot({
     suppressWarnings(plot( prep_plot(metric='Ne')))
+  })
+  
+  ## plot hist for geography
+  observe({
+    geog <- input$ti_hist
+    geog_levels <- NULL
+    if(geog!='Combined')
+      geog_levels <- sapply(input$ti_hist_level2,function(x)strsplit(as.character(x),' ')[[1]][1])
+    output$hist_by_location <- renderPlot({
+      hist_by_location(geog,geog_levels)
+    })#, 
+    #height = 3*hgt+500)
   })
   
   ## plot tree with height depending on number of sequences

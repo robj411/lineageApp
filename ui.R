@@ -29,18 +29,21 @@ CoG-UK</a>.</p>
     
     column(12, id = "plot",
            tabsetPanel(
+             tabPanel("Samples over time",
+                      column(4, id = "menu",
+                                     selectInput('ti_hist', label = '', choices=c('Combined','Country','Region','County','Local authority'),selected='Combined'),
+                                     checkboxGroupInput('ti_hist_level2', label = '', NULL)
+                                     #checkboxGroupInput(inputId='ti_filename', label='Lineages', choices = NULL, selected = NULL)
+                      ),
+                      column(8, 
+                      #downloadButton("save_incidence",
+                      #               "Save Table"),
+                      fluidRow( plotOutput( 'hist_by_location', width = "100%", height = "600px"), align="right")
+                      )
+             ),
              tabPanel("Trajectories",
                       column(3, id = "menu",
-                             #div(id = "status",
-                             #     shiny::verbatimTextOutput("output"),
-                             #    shiny::htmlOutput("progress")
-                             #),
-                             div(id = "titles",
-                                 div(id = "incidence_title", h4("Trajectory options")),
-                                 shinyjs::hidden(div(id = "si_title",
-                                                     h1("Serial Interval (SI) Input")))
-                             ),
-                             div(id = "1.1",
+                             div(id = "1.2",
                                  div(id = "incidence_data_type_error_box", class = "error_box",
                                      checkboxInput('ti_ci', label = "Credible intervals", 1),
                                      checkboxInput(inputId='ti_log_size', label='Effective size on log scale', value=F)
@@ -49,14 +52,7 @@ CoG-UK</a>.</p>
                                      , checkboxGroupInput(inputId='ti_filename', label='Lineages', choices = NULL, selected = NULL)
                                      
                                  )
-                             )#,
-                             #div(id = "control",
-                             #     shinyjs::hidden(actionButton("stop", label = "Stop")),
-                             #     shinyjs::disabled(actionButton("prev", label = "Previous")),
-                             #     shinyjs::disabled(actionButton("nxt", label = "Next")),
-                             #     shinyjs::hidden(actionButton("go", label = "Go")),
-                             #     textOutput("error")
-                             #)
+                             )
                              
                       ),
                       #         downloadButton("save_plot", "Save Image"),
