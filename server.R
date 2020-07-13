@@ -156,9 +156,10 @@ if(file.exists('datasets/lineageSetup.Rdata')){
       theme(axis.text=element_text(size=14),axis.title=element_text(size=14) ,panel.grid.major = element_blank(), panel.grid.minor = element_blank(),  panel.background = element_blank())
   }
   
-  barplot_by_region <- function(lin,plotby='region'){
+  barplot_by_region <- function(lin,plotby='region',timerange=NULL){
     category <- c('Lineage','region')[which(c('Lineage','region')!=plotby)]
     subseq <- parms$sequences[parms$sequences[[category]]==lin,]
+    if(!is.null(timerange)) subseq <- subset(subseq,Date<=timerange[2]&Date>=timerange[1])
     plt <- ggplot(subseq, aes(x=eval(parse(text=plotby)))) +
       geom_bar(color="black")
     #if(geog!='Combined') {
@@ -287,6 +288,7 @@ shiny::shinyServer(function(input, output, session) {
   updateSelectInput(session, inputId='ti_filename_tree', label = 'Lineage', choices = parms$labels, selected = parms$labels[which(parms$ids=='UK5')])
   updateSelectInput(session, inputId='ti_filename_region', label = 'Lineage', choices = parms$labels, selected = parms$labels[which(parms$ids=='UK5')])
   updateSelectInput(session, inputId='ti_region', label = 'Region', choices = unique(parms$sequences$region), selected = 'london')
+  #updateSliderInput(session, inputId='ti_window', min = 0, max = 100, value = c(40, 60))
   
   ## initialise reactive values
   re.filename <- reactiveVal( parms$filename )
@@ -450,9 +452,9 @@ shiny::shinyServer(function(input, output, session) {
   ## bar plot lineage by region
   observe({
     region <- input$ti_region
-    
+    timerange <- input$ti_window
     output$linbyregion <- renderPlot({
-      barplot_by_region(region,'Lineage')
+      barplot_by_region(region,'Lineage',timerange)
     })
   })
   

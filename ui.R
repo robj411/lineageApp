@@ -51,8 +51,17 @@ CoG-UK</a>.</p>
                         , style = "font-size:15px", align="left")
              ),
              tabPanel("Lineages by region",
-                      fluidRow(
-                        selectInput('ti_region', label = 'Region', NULL)),
+                      column(4,
+                             selectInput('ti_region', label = 'Region', NULL)
+                      ),
+                      column(8, 
+                             sliderInput("ti_window", label = "Time window",
+                                         min = as.Date("2020-02-03","%Y-%m-%d"),
+                                         max = as.Date("2020-06-02","%Y-%m-%d"),
+                                         value=c(as.Date("2020-02-03"),as.Date("2020-06-02")),
+                                         timeFormat="%Y-%m-%d")
+                      )
+                      ,
                       fluidRow( plotOutput( 'linbyregion', width = "500px", height = "500px"), align="left")
              ),
              tabPanel("Regions by lineage",
