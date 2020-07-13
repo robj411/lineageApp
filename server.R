@@ -209,6 +209,10 @@ if(file.exists('datasets/lineageSetup.Rdata')){
   parms$labels <- paste0(ids,' (',p614,')')
   parms$geno_labs <- paste0('All "',unique(parms$p614),'"')
   parms$track_geno_groups <- rep(0,length(parms$geno_labs))
+  parms$lineage_table <- data.frame(Lineage=ids,p614=p614,`Number of samples`=sapply(ids,function(x)sum(parms$sequences$Lineage==x)),
+                                    `First date`=sapply(ids,function(x)min(subset(parms$sequences,Lineage==x)$Date)),
+                                    `Most recent date`=sapply(ids,function(x)max(subset(parms$sequences,Lineage==x)$Date)))
+  rownames(parms$lineage_table) <- NULL
   
   ## create combined tree
   DGSlist <- list('D','G',c('D','G'))
@@ -440,6 +444,19 @@ shiny::shinyServer(function(input, output, session) {
     #height = 3*hgt+500)
   })
   
+  ## lineages
+  output$lineages <- DT::renderDataTable({
+    datatable(parms$lineage_table,options = list("pageLength" = 500))
+  })
+  
+  ## lineages: download button
+  output$save_lineage_table <- downloadHandler(
+    filename = function() { 
+      paste("lineage-dataset-", Sys.Date(), ".csv", sep="")
+    },
+    content = function(file) {
+      write.csv(parms$lineage_table, file, row.names = F)
+    })
   
   ## sequences: show all sequences button
   observe({
@@ -456,10 +473,10 @@ shiny::shinyServer(function(input, output, session) {
     ## sequences: download button
     output$save_table <- downloadHandler(
       filename = function() { 
-        paste("dataset-", Sys.Date(), ".csv", sep="")
+        paste("sequences-dataset-", Sys.Date(), ".csv", sep="")
       },
       content = function(file) {
-        write.csv(tab, file)
+        write.csv(tab, file, row.names = F)
       })
   })
   

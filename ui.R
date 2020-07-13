@@ -71,6 +71,14 @@ CoG-UK</a>.</p>
                       fluidRow( plotly::plotlyOutput( 'tree', width = "100%", height = "auto"), align="right")
                       #fluidRow( plotOutput( 'tree', width = "100%", height = "auto"), align="right")
              ),
+             tabPanel("Lineages",
+                      downloadButton("save_lineage_table", "Save table"),
+                      #tableOutput("estimated_r_output")
+                      fluidRow(
+                        #checkboxInput(inputId='show_all_sequences', label='Show all sequences', value=F),
+                        DT::dataTableOutput(outputId = 'lineages')
+                        , style = "font-size:15px", align="left")
+             ),
              tabPanel("Sequences",
                       downloadButton("save_table", "Save table"),
                       #tableOutput("estimated_r_output")
