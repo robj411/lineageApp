@@ -62,14 +62,14 @@ CoG-UK</a>.</p>
                                          timeFormat="%Y-%m-%d")
                       )
                       ,
-                      fluidRow( plotOutput( 'linbyregion', width = "500px", height = "400px"), align="left"),
-                      fluidRow( plotOutput( 'hist_by_location2', width = "100%", height = "400px"), align="right")
+                      column(6, plotOutput( 'linbyregion', width = "500px", height = "400px"), align="left"),
+                      column(6, plotOutput( 'hist_by_location2', width = "100%", height = "400px"), align="right")
              ),
              tabPanel("Regions by lineage",
                       fluidRow(
                         selectInput('ti_filename_region', label = 'Lineage', NULL)),
-                      fluidRow( plotOutput( 'byregion', width = "500px", height = "400px"), align="left"),
-                      fluidRow( plotOutput( 'hist_by_location3', width = "100%", height = "400px"), align="right")
+                      column(6, plotOutput( 'byregion', width = "500px", height = "400px")),
+                      column(6, plotOutput( 'hist_by_location3', width = "100%", height = "400px"))
              ),
              tabPanel("Skygrowth curves",
                       column(3, id = "menu",
