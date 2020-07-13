@@ -57,17 +57,19 @@ CoG-UK</a>.</p>
                       column(8, 
                              sliderInput("ti_window", label = "Time window",
                                          min = as.Date("2020-02-03","%Y-%m-%d"),
-                                         max = as.Date("2020-06-02","%Y-%m-%d"),
-                                         value=c(as.Date("2020-02-03"),as.Date("2020-06-02")),
+                                         max = as.Date(today(),"%Y-%m-%d"),
+                                         value=c(as.Date("2020-02-03"),as.Date(today())),
                                          timeFormat="%Y-%m-%d")
                       )
                       ,
-                      fluidRow( plotOutput( 'linbyregion', width = "500px", height = "500px"), align="left")
+                      fluidRow( plotOutput( 'linbyregion', width = "500px", height = "400px"), align="left"),
+                      fluidRow( plotOutput( 'hist_by_location2', width = "100%", height = "400px"), align="right")
              ),
              tabPanel("Regions by lineage",
                       fluidRow(
                         selectInput('ti_filename_region', label = 'Lineage', NULL)),
-                      fluidRow( plotOutput( 'byregion', width = "500px", height = "500px"), align="left")
+                      fluidRow( plotOutput( 'byregion', width = "500px", height = "400px"), align="left"),
+                      fluidRow( plotOutput( 'hist_by_location3', width = "100%", height = "400px"), align="right")
              ),
              tabPanel("Skygrowth curves",
                       column(3, id = "menu",

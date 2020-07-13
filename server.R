@@ -139,14 +139,17 @@ if(file.exists('datasets/lineageSetup.Rdata')){
     label_column <- 1
     if(geog=='Local authority'){ 
       label_column <- 'lad'
-      subseq <- subseq[subseq[['lad']]%in%geog_levels,]
+      subseq <- subseq[subseq[[label_column]]%in%geog_levels,]
+    }else if(geog=='Lineage'){ 
+      label_column <- 'Lineage'
+      subseq <- subseq[subseq[[label_column]]%in%geog_levels,]
     }else if(geog!='Combined'){
       label_column <- tolower(geog)
-      subseq <- subseq[subseq[[tolower(geog)]]%in%geog_levels,]
+      subseq <- subseq[subseq[[label_column]]%in%geog_levels,]
     }
     plt <- ggplot(subseq, aes(x=as.Date(Date), fill=eval(parse(text=label_column)))) +
       geom_histogram(bins=30,alpha=0.5, position="identity", color="black")
-    if(geog!='Combined') {
+    if(geog!='Combined'&length(geog_levels)>1) {
       plt <- plt + guides(fill=guide_legend(title=label_column)) + 
         theme(legend.text=element_text(size=14),legend.title=element_text(size=14),legend.position="top")
     }else{
@@ -456,6 +459,11 @@ shiny::shinyServer(function(input, output, session) {
     output$linbyregion <- renderPlot({
       barplot_by_region(region,'Lineage',timerange)
     })
+    
+    ## plot hist for geography
+    output$hist_by_location2 <- renderPlot({
+      hist_by_location(geog='region',geog_levels=region)
+    })
   })
   
   ## regions by lineage ########################################################
@@ -470,6 +478,10 @@ shiny::shinyServer(function(input, output, session) {
     
     output$byregion <- renderPlot({
       barplot_by_region(lin,'region')
+    })
+    ## plot hist for geography
+    output$hist_by_location3 <- renderPlot({
+      hist_by_location(geog='Lineage',geog_levels=lin)
     })
   })
   
