@@ -12,6 +12,18 @@ library(dplyr)
 library(RColorBrewer)
 library(plotrix)
 
+#options(ggplot2.discrete.fill=scale_fill_hue())
+#options(ggplot2.continuous.colour=scale_colour_hue())
+#options(ggplot2.continuous.fill=scale_fill_hue())
+#options(ggplot2.discrete.colour=scale_colour_hue())
+#scale_colour_discrete <- function(...) {
+#  scale_colour_brewer(..., palette=scale_colour_hue())
+#}#
+
+#scale_fill_discrete <- function(...) {
+#  scale_fill_brewer(..., palette=scale_fill_hue())
+#}
+
 if(file.exists('datasets/lineageSetup.Rdata')){
   load('datasets/lineageSetup.Rdata')
 }else{
@@ -136,8 +148,8 @@ if(file.exists('datasets/lineageSetup.Rdata')){
   }
   
   
-  hist_by_location <- function(geog,geog_levels){
-    subseq <- parms$sequences
+  hist_by_location <- function(sequ,geog,geog_levels){
+    subseq <- sequ
     label_column <- 1
     if(geog=='Local authority'){ 
       label_column <- 'lad'
@@ -157,13 +169,14 @@ if(file.exists('datasets/lineageSetup.Rdata')){
     }else{
       plt <- plt + guides(fill=FALSE)
     }
+    #if(length(geog_levels)<=1) plt <- plt + scale_fill_brewer(palette='Blues')
     plt + xlab('Date') + ylab ('Count') +
       theme(axis.text=element_text(size=14),axis.title=element_text(size=14) ,panel.grid.major = element_blank(), panel.grid.minor = element_blank(),  panel.background = element_blank())
   }
   
-  barplot_by_region <- function(lin,plotby='region',timerange=NULL){
+  barplot_by_region <- function(sequ,lin,plotby='region',timerange=NULL){
     category <- c('Lineage','region')[which(c('Lineage','region')!=plotby)]
-    subseq <- parms$sequences[parms$sequences[[category]]==lin,]
+    subseq <- sequ[parms$sequences[[category]]==lin,]
     if(!is.null(timerange)) subseq <- subset(subseq,Date<=timerange[2]&Date>=timerange[1])
     plt <- ggplot(subseq, aes(x=eval(parse(text=plotby)))) +
       geom_bar(color="black")
@@ -358,7 +371,7 @@ shiny::shinyServer(function(input, output, session) {
     if(geog!='Combined')
       geog_levels <- sapply(input$ti_hist_level2,function(x)strsplit(as.character(x),' \\(')[[1]][1])
     output$hist_by_location <- renderPlot({
-      hist_by_location(geog,geog_levels)
+      hist_by_location(parms$sequences,geog,geog_levels)
     })#, 
     #height = 3*hgt+500)
   })
@@ -477,12 +490,11 @@ shiny::shinyServer(function(input, output, session) {
     region <- input$ti_region
     timerange <- input$ti_window
     output$linbyregion <- renderPlot({
-      barplot_by_region(region,'Lineage',timerange)
-    })
-    
+      barplot_by_region(parms$sequences,region,'Lineage',timerange)
+    },height=100+10*length(unique(parms$sequences$Lineage[parms$sequences$region==region])))
     ## plot hist for geography
     output$hist_by_location2 <- renderPlot({
-      hist_by_location(geog='region',geog_levels=region)
+      hist_by_location(parms$sequences,geog='region',geog_levels=region)
     })
   })
   
@@ -495,13 +507,12 @@ shiny::shinyServer(function(input, output, session) {
   ## bar plot lineage by region
   observe({
     lin <- sapply(input$ti_filename_region,function(x)strsplit(as.character(x),' \\(')[[1]][1])
-    
     output$byregion <- renderPlot({
-      barplot_by_region(lin,'region')
-    })
+      barplot_by_region(parms$sequences,lin,'region')
+    },height=100+10*length(unique(parms$sequences$region[parms$sequences$Lineage==lin])))
     ## plot hist for geography
     output$hist_by_location3 <- renderPlot({
-      hist_by_location(geog='Lineage',geog_levels=lin)
+      hist_by_location(parms$sequences,geog='Lineage',geog_levels=lin)
     })
   })
   
