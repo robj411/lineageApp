@@ -9,6 +9,8 @@ library(ggtree)
 library( ggplot2 )
 library(plotly)
 library(dplyr)
+library(RColorBrewer)
+library(plotrix)
 
 if(file.exists('datasets/lineageSetup.Rdata')){
   load('datasets/lineageSetup.Rdata')
@@ -239,17 +241,26 @@ if(file.exists('datasets/lineageSetup.Rdata')){
   parms$all_combined <- lapply(1:length(DGSlist),function(dg){
     all_combined <- list()
     for(metric in c('growth','R','Ne')){
-      
+      # extract tables
       blocks <- list()
       for(i in 1:length(lineages)){
-        if(parms$p614[i]%in%DGSlist[[dg]])
-          blocks[[length(blocks)+1]] <- lineages[[i]][[metric]]
+        if(parms$p614[i]%in%DGSlist[[dg]]){
+          # weight growth rate by effective sample size
+          lintab <- lineages[[i]][[metric]]
+          lintab$weight <- subset(parms$lineage_table,Lineage==ids[i])$Number.of.samples
+          # exclude anything explolated beyond 14 days
+          most_recent_sample <- as.Date(subset(parms$lineage_table,Lineage==ids[i])$Most.recent.date)
+          close_in_time_to_sample <- subset(lintab,time<most_recent_sample+14)
+          blocks[[length(blocks)+1]] <- close_in_time_to_sample
+        }
       }
       combined <- do.call(rbind,blocks)
       daytimes <- combined$time
       combined$days <- sapply(daytimes,function(x)strsplit(as.character(x),' ')[[1]][1])
       uniquetimes <- unique(combined$days)
+      # estimate variance as average between bounds
       combined$var = ((combined$pc97.5-combined$pc2.5)/2/qnorm(0.975))^2
+      # or the minimum
       if(metric=='Ne'){
         combined$var <- (pmin(abs(combined$pc97.5-combined$pc50),abs(combined$pc2.5-combined$pc50),na.rm=T)/qnorm(0.975))^2
       }
@@ -257,6 +268,12 @@ if(file.exists('datasets/lineageSetup.Rdata')){
         temp <- subset(combined,days==j)
         mu <- mean(temp$pc50)
         sd <- sqrt(sum(temp$var)/nrow(temp)^2)
+        if(metric=='growth') {
+          weights <- temp$weight
+          weights <- weights/mean(weights)
+          mu <- sum(temp$pc50*weights)/sum(weights)
+          sd <- sqrt(sum(temp$var*weights)/sum(weights)^2)
+        }
         if(metric=='Ne') {
           out <- c()
           temp <- subset(temp,!is.na(pc97.5))
@@ -266,7 +283,7 @@ if(file.exists('datasets/lineageSetup.Rdata')){
           c(j,qnorm(c(0.025,0.5,0.975),mean=mu,sd=sd))
         }
       })))
-      colnames(grouptraj) <- colnames(blocks[[1]])
+      colnames(grouptraj) <- colnames(blocks[[1]])[1:4]
       for(i in 2:4) grouptraj[,i] <- as.numeric(as.character(grouptraj[,i]))
       grouptraj[,1] <- as.Date(grouptraj[,1])
       neworder <- sort.int(grouptraj[,1],decreasing = F,index.return = T)
@@ -274,6 +291,9 @@ if(file.exists('datasets/lineageSetup.Rdata')){
     }
     all_combined
   })
+  
+  parms$region_table <- sapply( parms$lineage_table$Lineage,function(x) sapply(unique(parms$sequences$region),function(y) sum(parms$sequences$Lineage==x&parms$sequences$region==y)))
+  colnames(parms$region_table) <- parms$lineage_table$Lineage
   
   ## save ######################################################################################
   ## clear environment
@@ -485,6 +505,32 @@ shiny::shinyServer(function(input, output, session) {
     })
   })
   
+  
+  
+  ## regions and lineages ########################################
+  observe({
+  output$heatmap <- renderPlot({
+    par(mar=c(5,12,1,5.5))
+    normalisation <- input$ti_heat_norm
+    tab <- parms$region_table
+    labs <- rownames(parms$region_table)
+    if(normalisation=='By lineage') for(i in 1:ncol(tab)) tab[,i] <- tab[,i]/sum(tab[,i])
+    if(normalisation=='By region') for(i in 1:nrow(tab)) tab[i,] <- tab[i,]/sum(tab[i,])
+    get.pal=colorRampPalette(brewer.pal(9,"Blues"))
+    redCol=rev(get.pal(12))
+    bkT <- seq(max(tab)+1e-10, 0,length=13)
+    cex.lab <- 1.5
+    maxval <- round(bkT[1],digits=1)
+    col.labels<- c(0,maxval/2,maxval)
+    cellcolors <- vector()
+    for(ii in 1:length(unlist(tab)))
+      cellcolors[ii] <- redCol[tail(which(unlist(tab[ii])<bkT),n=1)]
+    color2D.matplot(tab,cellcolors=cellcolors,main="",xlab="",ylab="",cex.lab=2,axes=F,border='white')
+    fullaxis(side=1,las=2,at=1:ncol(tab)-0.5,labels=colnames(tab),line=NA,pos=NA,outer=FALSE,font=NA,lwd=0,cex.axis=1)
+    fullaxis(side=2,las=1,at=(length(labs)-1):0+0.5,labels=labs,line=NA,pos=NA,outer=FALSE,font=NA,lwd=0,cex.axis=1)
+    color.legend(ncol(tab)+0.5,0,ncol(tab)+1.5,length(labs),col.labels,rev(redCol),gradient="y",cex=1,align="rb")
+  })
+  })
   
   ## tree ########################################################
   ## which filename is selected for tree?

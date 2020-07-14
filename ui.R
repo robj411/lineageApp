@@ -63,13 +63,18 @@ CoG-UK</a>.</p>
                       )
                       ,
                       column(6, plotOutput( 'linbyregion', width = "500px", height = "400px"), align="left"),
-                      column(6, plotOutput( 'hist_by_location2', width = "100%", height = "400px"), align="right")
+                      column(6, plotOutput( 'hist_by_location2', width = "100%", height = "400px"), align="left")
              ),
              tabPanel("Regions by lineage",
                       fluidRow(
                         selectInput('ti_filename_region', label = 'Lineage', NULL)),
                       column(6, plotOutput( 'byregion', width = "500px", height = "400px")),
                       column(6, plotOutput( 'hist_by_location3', width = "100%", height = "400px"))
+             ),
+             tabPanel("Regions and lineages",
+                      fluidRow(selectInput('ti_heat_norm', label = 'Normalistion', c('None','By lineage','By region'),selected='None')),
+                      column(10, plotOutput( 'heatmap', width = "800px", height = "400px")),
+                      #column(6, plotOutput( 'hist_by_location3', width = "100%", height = "400px"))
              ),
              tabPanel("Skygrowth curves",
                       column(3, id = "menu",
