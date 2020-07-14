@@ -50,31 +50,35 @@ CoG-UK</a>.</p>
                         DT::dataTableOutput(outputId = 'lineages')
                         , style = "font-size:15px", align="left")
              ),
-             tabPanel("Lineages by region",
-                      column(4,
-                             selectInput('ti_region', label = 'Region', NULL)
-                      ),
-                      column(8, 
-                             sliderInput("ti_window", label = "Time window",
-                                         min = as.Date("2020-02-03","%Y-%m-%d"),
-                                         max = as.Date(today(),"%Y-%m-%d"),
-                                         value=c(as.Date("2020-02-03"),as.Date(today())),
-                                         timeFormat="%Y-%m-%d")
-                      )
-                      ,
-                      column(6, plotOutput( 'linbyregion', width = "500px", height = "400px"), align="left"),
-                      column(6, plotOutput( 'hist_by_location2', width = "100%", height = "400px"), align="left")
-             ),
-             tabPanel("Regions by lineage",
-                      fluidRow(
-                        selectInput('ti_filename_region', label = 'Lineage', NULL)),
-                      column(6, plotOutput( 'byregion', width = "500px", height = "400px")),
-                      column(6, plotOutput( 'hist_by_location3', width = "100%", height = "400px"))
-             ),
              tabPanel("Regions and lineages",
-                      fluidRow(selectInput('ti_heat_norm', label = 'Normalistion', c('None','By lineage','By region'),selected='None')),
-                      column(10, plotOutput( 'heatmap', width = "800px", height = "400px")),
-                      #column(6, plotOutput( 'hist_by_location3', width = "100%", height = "400px"))
+                      tabsetPanel(
+                        tabPanel("Heatplot",
+                                 fluidRow(selectInput('ti_heat_norm', label = 'Normalistion', c('None','By lineage','By region'),selected='None')),
+                                 column(10, plotOutput( 'heatmap', width = "800px", height = "400px"))
+                                 #column(6, plotOutput( 'hist_by_location3', width = "100%", height = "400px"))
+                        ),
+                        tabPanel("Lineages by region",
+                                 column(4,
+                                        selectInput('ti_region', label = 'Region', NULL)
+                                 ),
+                                 column(8, 
+                                        sliderInput("ti_window", label = "Time window",
+                                                    min = as.Date("2020-02-03","%Y-%m-%d"),
+                                                    max = as.Date(today(),"%Y-%m-%d"),
+                                                    value=c(as.Date("2020-02-03"),as.Date(today())),
+                                                    timeFormat="%Y-%m-%d")
+                                 )
+                                 ,
+                                 column(6, plotOutput( 'linbyregion', width = "500px", height = "400px"), align="left"),
+                                 column(6, plotOutput( 'hist_by_location2', width = "100%", height = "400px"), align="left")
+                        ),
+                        tabPanel("Regions by lineage",
+                                 fluidRow(
+                                   selectInput('ti_filename_region', label = 'Lineage', NULL)),
+                                 column(6, plotOutput( 'byregion', width = "500px", height = "400px")),
+                                 column(6, plotOutput( 'hist_by_location3', width = "100%", height = "400px"))
+                        )
+                      )
              ),
              tabPanel("Skygrowth curves",
                       column(3, id = "menu",
