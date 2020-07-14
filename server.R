@@ -176,7 +176,7 @@ if(file.exists('datasets/lineageSetup.Rdata')){
   
   barplot_by_region <- function(sequ,lin,plotby='region',timerange=NULL){
     category <- c('Lineage','region')[which(c('Lineage','region')!=plotby)]
-    subseq <- sequ[parms$sequences[[category]]==lin,]
+    subseq <- sequ[sequ[[category]]==lin,]
     if(!is.null(timerange)) subseq <- subset(subseq,Date<=timerange[2]&Date>=timerange[1])
     plt <- ggplot(subseq, aes(x=eval(parse(text=plotby)))) +
       geom_bar(color="black")
