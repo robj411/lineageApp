@@ -73,7 +73,8 @@ CoG-UK</a>.</p>
                         tabPanel("Regions by lineage",
                                  column(2, selectInput('ti_filename_region', label = 'Lineage', NULL),align='center'),
                                  column(5, plotOutput( 'byregion', width = "90%", height = "auto"),align='center'),
-                                 column(5, plotOutput( 'hist_by_location3', width = "100%", height = "400px"))
+                                 column(5, plotOutput( 'hist_by_location3', width = "100%", height = "400px")),
+                                 column(12, plotOutput( 'heatmap_reg_date_lin', width = "1000px", height = "400px"))
                         )
                       )
              ),

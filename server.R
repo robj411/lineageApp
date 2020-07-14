@@ -12,17 +12,9 @@ library(dplyr)
 library(RColorBrewer)
 library(plotrix)
 
-#options(ggplot2.discrete.fill=scale_fill_hue())
-#options(ggplot2.continuous.colour=scale_colour_hue())
-#options(ggplot2.continuous.fill=scale_fill_hue())
-#options(ggplot2.discrete.colour=scale_colour_hue())
-#scale_colour_discrete <- function(...) {
-#  scale_colour_brewer(..., palette=scale_colour_hue())
-#}#
-
-#scale_fill_discrete <- function(...) {
-#  scale_fill_brewer(..., palette=scale_fill_hue())
-#}
+scale_fill_discrete <- function(...) {
+  scale_fill_brewer(..., palette="Accent")
+}
 
 if(file.exists('datasets/lineageSetup.Rdata')){
   load('datasets/lineageSetup.Rdata')
@@ -260,6 +252,7 @@ if(file.exists('datasets/lineageSetup.Rdata')){
         if(parms$p614[i]%in%DGSlist[[dg]]){
           # weight growth rate by effective sample size
           lintab <- lineages[[i]][[metric]]
+          #lintab$weight <- lineages[[i]]$Ne$pc50
           lintab$weight <- subset(parms$lineage_table,Lineage==ids[i])$Number.of.samples
           # exclude anything explolated beyond 14 days
           most_recent_sample <- as.Date(subset(parms$lineage_table,Lineage==ids[i])$Most.recent.date)
@@ -308,6 +301,18 @@ if(file.exists('datasets/lineageSetup.Rdata')){
   parms$region_table <- sapply( parms$lineage_table$Lineage,function(x) sapply(unique(parms$sequences$region),function(y) sum(parms$sequences$Lineage==x&parms$sequences$region==y)))
   colnames(parms$region_table) <- parms$lineage_table$Lineage
   
+  parms$region_date_lineage_table <- lapply( parms$lineage_table$Lineage, function(x){
+    sub1 <- subset(parms$sequences,Lineage==x)
+     tab <- t(sapply(unique(sub1$region), function(y){
+      sapply(seq.Date(min(as.Date(sub1$Date)),max(as.Date(sub1$Date)),by=1), function(z)
+         sum(sub1$Date==z&sub1$region==y))
+       }))
+     rownames(tab) <- unique(sub1$region)
+     colnames(tab) <- as.character(seq.Date(min(as.Date(sub1$Date)),max(as.Date(sub1$Date)),by=1))
+     tab
+    })
+  names(parms$region_date_lineage_table) <- parms$lineage_table$Lineage
+  
   ## save ######################################################################################
   ## clear environment
   rm(cols,files,gtdsfiles,i,ids,lineages,maxind,p614,sequences,trees,x,metadata,Ds,Gs,DGSlist)
@@ -324,18 +329,12 @@ shiny::shinyServer(function(input, output, session) {
   updateSelectInput(session, inputId='ti_filename_tree', label = 'Lineage', choices = parms$labels, selected = parms$labels[which(parms$ids=='UK5')])
   updateSelectInput(session, inputId='ti_filename_region', label = 'Lineage', choices = parms$labels, selected = parms$labels[which(parms$ids=='UK5')])
   updateSelectInput(session, inputId='ti_region', label = 'Region', choices = unique(parms$sequences$region), selected = 'london')
-  #updateSliderInput(session, inputId='ti_window', min = 0, max = 100, value = c(40, 60))
   
   ## initialise reactive values
   re.filename <- reactiveVal( parms$filename )
   re.filename_tree <- reactiveVal( parms$filename_tree )
-  re.region <- reactiveVal( 'london' )
-  re.filename_region <- reactiveVal( parms$filename_tree )
-  re.tree_colour <- reactiveVal( 'Genotype' )
   re.hist <- reactiveVal( 'Combined' )
   re.ci <- reactiveVal( 1 )
-  re.DGX <- reactiveVal( NULL )
-  re.DGXgroup <- reactiveVal( NULL )
   re.log_size <- reactiveVal( F )
   
   ## unique with na.rm
@@ -387,13 +386,7 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   ## plot all D or all G?
-  observeEvent( input$ti_groups, {
-    re.DGXgroup( input$ti_groups )
-  }, ignoreNULL = FALSE)
-  
-  ## plot all D or all G?
   observeEvent( input$ti_DGX, {
-    re.DGX( input$ti_DGX )
     new_labs <- as.numeric(parms$geno_labs%in%input$ti_DGX)
     group_to_update <- which(new_labs!=parms$track_geno_groups)
     ## only if there was a change to selection
@@ -480,11 +473,6 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   ## lineage by region ########################################################
-  ## which region?
-  observeEvent( input$ti_region, {
-    re.region( input$ti_region )
-  })
-  
   ## bar plot lineage by region
   observe({
     region <- input$ti_region
@@ -499,11 +487,22 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   ## regions by lineage ########################################################
-  ## which lineage?
-  observeEvent( input$ti_filename_region, {
-    re.filename_region( input$ti_filename_region )
-  })
-  
+  blueheat <- function(tab,collabs){
+    rowlabs <- rownames(tab)
+    get.pal=colorRampPalette(brewer.pal(9,"Blues"))
+    redCol=rev(get.pal(14))
+    bkT <- seq(max(tab)+1e-10, 0,length=15)
+    cex.lab <- 1.5
+    maxval <- round(bkT[1],digits=1)
+    col.labels<- c(0,maxval/2,maxval)
+    cellcolors <- vector()
+    for(ii in 1:length(unlist(tab)))
+      cellcolors[ii] <- redCol[tail(which(unlist(tab[ii])<bkT),n=1)]
+    color2D.matplot(tab,cellcolors=cellcolors,main="",xlab="",ylab="",cex.lab=2,axes=F,border='white')
+    fullaxis(side=1,las=2,at=1:ncol(tab)-0.5,labels=collabs,line=NA,pos=NA,outer=FALSE,font=NA,lwd=0,cex.axis=1)
+    fullaxis(side=2,las=1,at=(length(rowlabs)-1):0+0.5,labels=rowlabs,line=NA,pos=NA,outer=FALSE,font=NA,lwd=0,cex.axis=1)
+    color.legend(ncol(tab)+0.5,0,ncol(tab)+1.5,length(rowlabs),col.labels,rev(redCol),gradient="y",cex=1,align="rb")
+  }
   ## bar plot lineage by region
   observe({
     lin <- sapply(input$ti_filename_region,function(x)strsplit(as.character(x),' \\(')[[1]][1])
@@ -514,9 +513,14 @@ shiny::shinyServer(function(input, output, session) {
     output$hist_by_location3 <- renderPlot({
       hist_by_location(parms$sequences,geog='Lineage',geog_levels=lin)
     })
+    ## plot heatmap
+    output$heatmap_reg_date_lin <- renderPlot({
+      par(mar=c(7,12,1,5.5))
+      tab <- parms$region_date_lineage_table[[lin]]
+      collabs <- as.Date(colnames(tab))
+      blueheat(tab,collabs)
+    })
   })
-  
-  
   
   ## regions and lineages ########################################
   observe({
@@ -524,22 +528,10 @@ shiny::shinyServer(function(input, output, session) {
     par(mar=c(5,12,1,5.5))
     normalisation <- input$ti_heat_norm
     tab <- parms$region_table
-    labs <- rownames(parms$region_table)
+    collabs <- colnames(parms$region_table)
     if(normalisation=='By lineage') for(i in 1:ncol(tab)) tab[,i] <- tab[,i]/sum(tab[,i])
     if(normalisation=='By region') for(i in 1:nrow(tab)) tab[i,] <- tab[i,]/sum(tab[i,])
-    get.pal=colorRampPalette(brewer.pal(9,"Blues"))
-    redCol=rev(get.pal(12))
-    bkT <- seq(max(tab)+1e-10, 0,length=13)
-    cex.lab <- 1.5
-    maxval <- round(bkT[1],digits=1)
-    col.labels<- c(0,maxval/2,maxval)
-    cellcolors <- vector()
-    for(ii in 1:length(unlist(tab)))
-      cellcolors[ii] <- redCol[tail(which(unlist(tab[ii])<bkT),n=1)]
-    color2D.matplot(tab,cellcolors=cellcolors,main="",xlab="",ylab="",cex.lab=2,axes=F,border='white')
-    fullaxis(side=1,las=2,at=1:ncol(tab)-0.5,labels=colnames(tab),line=NA,pos=NA,outer=FALSE,font=NA,lwd=0,cex.axis=1)
-    fullaxis(side=2,las=1,at=(length(labs)-1):0+0.5,labels=labs,line=NA,pos=NA,outer=FALSE,font=NA,lwd=0,cex.axis=1)
-    color.legend(ncol(tab)+0.5,0,ncol(tab)+1.5,length(labs),col.labels,rev(redCol),gradient="y",cex=1,align="rb")
+    blueheat(tab,collabs)
   })
   })
   
@@ -550,16 +542,11 @@ shiny::shinyServer(function(input, output, session) {
     updateCheckboxGroupInput(session,"ti_filename",selected=unique(c(input$ti_filename_tree,input$ti_filename)))
   })
   
-  ## how to colour the tree tips
-  observeEvent( input$ti_tree_colour, {
-    re.tree_colour( input$ti_tree_colour )
-  })
-  
   ## plot tree with height depending on number of sequences
   observe({
     anno <- 'd614g'
-    if(re.tree_colour()=='Location') anno <- 'location'
-    if(re.tree_colour()=='Country') anno <- 'country'
+    if(input$ti_tree_colour =='Location') anno <- 'location'
+    if(input$ti_tree_colour =='Country') anno <- 'country'
     fname <- re.filename_tree() 
     l_ind <- match(fname,parms$labels)
     #hgt <- length(parms$tree[[l_ind]]$Ti)
