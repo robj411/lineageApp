@@ -11,6 +11,8 @@ packages:
   - grid
   - lubridate
   - plotly
+  - plotrix
+  - RColorBrewer
   - scales
   - shiny
   - shinyjs
