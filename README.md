@@ -1,11 +1,33 @@
-<!--[![Build Status](https://travis-ci.org/jstockwin/EpiEstimApp.svg?branch=master)](https://travis-ci.org/jstockwin/EpiEstimApp)
+Combining trajectories in regions
+================
 
-# TransmissibilityEstimator
+Demonstrated using the North East, as there are only three lineages that
+appear in the North East:
 
-This application estimates disease transmissibility from incidence time series and time-censored serial interval data.
+![](README_files/figure-gfm/plot%20lineages-1.png)<!-- -->
 
-The authors request users to cite the original publication when referring to this tool, the format or results generated from it: Thompson RN, Stockwin JE, van Gaalen RD, Polonsky JA, et al. Improved inference of time-varying reproduction numbers during infectious disease outbreaks. _Epidemics_ (2019). https://www.sciencedirect.com/science/article/pii/S1755436519300350
+The lineages that appear in the North East are
 
-https://github.com/jstockwin/EpiEstimApp/wiki
+    ## UK214 UK2735 UK2916
 
--->
+We allocate the lineages’ trajectories to the North East according to
+the extent to which they were in the North East vs. other regions, by
+(a) spreading each sample over up to seven days, (b) filling in any
+empty days linearly from non-zero neighbouring day, and (c) normalising
+each day, so that on each day the lineage’s effective population is
+distributed between the constituent regions:
+
+![](README_files/figure-gfm/plot%20inputs-1.png)<!-- -->
+
+And here are the trajectories for the three:
+
+![](README_files/figure-gfm/plot%20traj-1.png)<!-- -->
+
+We write the effective population size as the weighted sum of the
+lineages:
+
+![](README_files/figure-gfm/Ne-1.png)<!-- -->
+
+For all regions:
+
+![](README_files/figure-gfm/plot%20all%20regions-1.png)<!-- -->
