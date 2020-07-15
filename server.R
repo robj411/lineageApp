@@ -20,6 +20,24 @@ if(file.exists('datasets/lineageSetup.Rdata')){
   load('datasets/lineageSetup.Rdata')
 }else{
   ## functions ##############################################################
+  blueheat <- function(tab,collabs){
+    rowlabs <- rownames(tab)
+    get.pal=colorRampPalette(brewer.pal(9,"Blues"))
+    redCol=rev(get.pal(8))
+    bkT <- seq(max(tab)+1e-10, 0,length=8)
+    cex.lab <- 1.5
+    maxval <- round(bkT[1],digits=1)
+    col.labels<- c(0,maxval/2,maxval)
+    cellcolors <- vector()
+    for(ii in 1:length(unlist(tab))){
+      cellcolors[ii] <- redCol[tail(which(unlist(tab[ii])<=bkT),n=1)]
+    }
+    color2D.matplot(tab,cellcolors=cellcolors,main="",xlab="",ylab="",cex.lab=2,axes=F,border='white')
+    fullaxis(side=1,las=2,at=1:ncol(tab)-0.5,labels=collabs,line=NA,pos=NA,outer=FALSE,font=NA,lwd=0,cex.axis=1)
+    fullaxis(side=2,las=1,at=(length(rowlabs)-1):0+0.5,labels=rowlabs,line=NA,pos=NA,outer=FALSE,font=NA,lwd=0,cex.axis=1)
+    color.legend(ncol(tab)+0.5,0,ncol(tab)+1.5,length(rowlabs),col.labels,rev(redCol),gradient="y",cex=1,align="rb")
+  }
+  
   quick_annotated_treeplot <- function( td , annotation='d614g', maxdate = NULL){ #date_decimal( max(tr$sts))
     tr = td 
     len <- length(unique(tr$data[[annotation]]))
@@ -440,22 +458,6 @@ shiny::shinyServer(function(input, output, session) {
       }
       return(p0)
     }
-  }
-  blueheat <- function(tab,collabs){
-    rowlabs <- rownames(tab)
-    get.pal=colorRampPalette(brewer.pal(9,"Blues"))
-    redCol=rev(get.pal(14))
-    bkT <- seq(max(tab)+1e-10, 0,length=15)
-    cex.lab <- 1.5
-    maxval <- round(bkT[1],digits=1)
-    col.labels<- c(0,maxval/2,maxval)
-    cellcolors <- vector()
-    for(ii in 1:length(unlist(tab)))
-      cellcolors[ii] <- redCol[tail(which(unlist(tab[ii])<bkT),n=1)]
-    color2D.matplot(tab,cellcolors=cellcolors,main="",xlab="",ylab="",cex.lab=2,axes=F,border='white')
-    fullaxis(side=1,las=2,at=1:ncol(tab)-0.5,labels=collabs,line=NA,pos=NA,outer=FALSE,font=NA,lwd=0,cex.axis=1)
-    fullaxis(side=2,las=1,at=(length(rowlabs)-1):0+0.5,labels=rowlabs,line=NA,pos=NA,outer=FALSE,font=NA,lwd=0,cex.axis=1)
-    color.legend(ncol(tab)+0.5,0,ncol(tab)+1.5,length(rowlabs),col.labels,rev(redCol),gradient="y",cex=1,align="rb")
   }
   
   observe({
