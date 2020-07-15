@@ -215,11 +215,15 @@ if(file.exists('datasets/lineageSetup.Rdata')){
     x <- readRDS(paste0('datasets/skygrowth1/',gtdsfiles[i]))
     maxind <- which.max(sapply(x,function(y)y[[7]]))
     trees[[i]] <- x[[maxind]]
-    sequences[[i]] <- as.data.frame(cbind(t(sapply(x[[1]]$tip.label,function(y)strsplit(y,'\\|')[[1]][1:2])),ids[i])) # sapply(x[[1]]$tip.label,function(y)gsub('England/','',y))
-    colnames(sequences[[i]]) <- c('Sequence','Date','Lineage')
-    sequences[[i]][,2] <- as.character(as.Date(date_decimal(as.numeric(as.character(sequences[[i]][,2])))))
+    sequences[[i]] <- as.data.frame(cbind(sapply(x[[1]]$tip.label,function(y)strsplit(y,'\\|')[[1]][1]),ids[i])) # sapply(x[[1]]$tip.label,function(y)gsub('England/','',y))
+    colnames(sequences[[i]]) <- c('Sequence','Lineage')
+    #sequences[[i]][,2] <- as.character(as.Date(date_decimal(as.numeric(as.character(sequences[[i]][,2])))))
     rownames(sequences[[i]]) <- NULL
     trees[[i]]$data <- metadata[match(sequences[[i]]$Sequence,metadata$Sequence),] 
+    trees[[i]]$data <- trees[[i]]$data[,colnames(trees[[i]]$data)%in%c('d614g','location','country', 'Date')]
+    trees[[i]]$tip.label <- as.character(1:length(trees[[i]]$tip.label))
+    names(trees[[i]]$sts) <- as.character(1:length(trees[[i]]$tip.label))
+    trees[[i]]$intree$tip.label <- as.character(1:length(trees[[i]]$intree$tip.label))
   }
   
   ## get genotypes
@@ -330,6 +334,12 @@ if(file.exists('datasets/lineageSetup.Rdata')){
      tab
     })
   names(parms$region_date_lineage_table) <- parms$lineage_table$Lineage
+  ## split so it's not identifiable
+  parms$sequences_geog <- parms$sequences[,colnames(parms$sequences)%in%c("Date","Lineage","adm2","adm1","d614g", "location","mapto","lad","county","region","country")]
+  parms$sequences <- parms$sequences[,colnames(parms$sequences)%in%c("Sequence","Date","Lineage","central_sample_id","adm1","d614g")]
+  ## shuffle
+  parms$sequences_geog$Date <- as.Date(sapply(parms$sequences_geog$Date,function(x)strsplit(as.character(x),' ')[[1]][1]))
+  parms$sequences_geog <- parms$sequences_geog[sample(1:nrow(parms$sequences_geog),replace=F),]
   
   ## save ######################################################################################
   ## clear environment
@@ -346,7 +356,7 @@ shiny::shinyServer(function(input, output, session) {
   updateCheckboxGroupInput(session, inputId='ti_filename', label = 'Lineages', choices = parms$labels, selected = parms$labels[which(parms$ids=='UK5')])
   updateSelectInput(session, inputId='ti_filename_tree', label = 'Lineage', choices = parms$labels, selected = parms$labels[which(parms$ids=='UK5')])
   updateSelectInput(session, inputId='ti_filename_region', label = 'Lineage', choices = parms$labels, selected = parms$labels[which(parms$ids=='UK5')])
-  updateSelectInput(session, inputId='ti_region', label = 'Region', choices = unique(parms$sequences$region), selected = 'london')
+  updateSelectInput(session, inputId='ti_region', label = 'Region', choices = unique(parms$sequences_geog$region), selected = 'london')
   
   ## initialise reactive values
   re.filename <- reactiveVal( parms$filename )
@@ -357,7 +367,7 @@ shiny::shinyServer(function(input, output, session) {
   unique.narm <- function(x,column='lad'){
     nms <- sort(unique(x))
     unnms <- nms[!is.na(nms)]
-    tallies <- sapply(unnms,function(x)sum(parms$sequences[[column]]==x,na.rm=T))
+    tallies <- sapply(unnms,function(x)sum(parms$sequences_geog[[column]]==x,na.rm=T))
     paste0(unnms,' (',tallies,')')
   }
   
@@ -370,13 +380,13 @@ shiny::shinyServer(function(input, output, session) {
     if(geog=='Combined')
       updateCheckboxGroupInput(session, inputId='ti_hist_level2', label = '', NULL)
     if(geog=='Country')
-      updateCheckboxGroupInput(session, inputId='ti_hist_level2', label = 'Country', choices = unique.narm(parms$sequences$country,'country'), selected = 'england')
+      updateCheckboxGroupInput(session, inputId='ti_hist_level2', label = 'Country', choices = unique.narm(parms$sequences_geog$country,'country'), selected = 'england')
     if(geog=='Region')
-      updateCheckboxGroupInput(session, inputId='ti_hist_level2', label = 'Region', choices = unique.narm(parms$sequences$region,'region'), selected = 'london')
+      updateCheckboxGroupInput(session, inputId='ti_hist_level2', label = 'Region', choices = unique.narm(parms$sequences_geog$region,'region'), selected = 'london')
     if(geog=='County')
-      updateCheckboxGroupInput(session, inputId='ti_hist_level2', label = 'County', choices = unique.narm(parms$sequences$county,'county'), selected = 'cambridgeshire')
+      updateCheckboxGroupInput(session, inputId='ti_hist_level2', label = 'County', choices = unique.narm(parms$sequences_geog$county,'county'), selected = 'cambridgeshire')
     if(geog=='Local authority')
-      updateCheckboxGroupInput(session, inputId='ti_hist_level2', label = 'Local authority', choices = unique.narm(parms$sequences$lad), selected = 'city of london')
+      updateCheckboxGroupInput(session, inputId='ti_hist_level2', label = 'Local authority', choices = unique.narm(parms$sequences_geog$lad), selected = 'city of london')
   })
   
   ## plot hist for geography
@@ -386,7 +396,7 @@ shiny::shinyServer(function(input, output, session) {
     if(geog!='Combined')
       geog_levels <- sapply(input$ti_hist_level2,function(x)strsplit(as.character(x),' \\(')[[1]][1])
     output$hist_by_location <- renderPlot({
-      hist_by_location(parms$sequences,geog,geog_levels)
+      hist_by_location(parms$sequences_geog,geog,geog_levels)
     })#, 
     #height = 3*hgt+500)
   })
@@ -486,11 +496,11 @@ shiny::shinyServer(function(input, output, session) {
     region <- input$ti_region
     timerange <- input$ti_window
     output$linbyregion <- renderPlot({
-      barplot_by_region(parms$sequences,region,'Lineage',timerange)
-    },height=100+10*length(unique(parms$sequences$Lineage[parms$sequences$region==region])))
+      barplot_by_region(parms$sequences_geog,region,'Lineage',timerange)
+    },height=100+10*length(unique(parms$sequences_geog$Lineage[parms$sequences_geog$region==region])))
     ## plot hist for geography
     output$hist_by_location2 <- renderPlot({
-      hist_by_location(parms$sequences,geog='region',geog_levels=region)
+      hist_by_location(parms$sequences_geog,geog='region',geog_levels=region)
     })
   })
   
@@ -499,11 +509,11 @@ shiny::shinyServer(function(input, output, session) {
   observe({
     lin <- sapply(input$ti_filename_region,function(x)strsplit(as.character(x),' \\(')[[1]][1])
     output$byregion <- renderPlot({
-      barplot_by_region(parms$sequences,lin,'region')
-    },height=100+10*length(unique(parms$sequences$region[parms$sequences$Lineage==lin])))
+      barplot_by_region(parms$sequences_geog,lin,'region')
+    },height=100+10*length(unique(parms$sequences_geog$region[parms$sequences_geog$Lineage==lin])))
     ## plot hist for geography
     output$hist_by_location3 <- renderPlot({
-      hist_by_location(parms$sequences,geog='Lineage',geog_levels=lin)
+      hist_by_location(parms$sequences_geog,geog='Lineage',geog_levels=lin)
     })
     ## plot heatmap
     output$heatmap_reg_date_lin <- renderPlot({
