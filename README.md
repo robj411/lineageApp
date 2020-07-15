@@ -13,9 +13,9 @@ The lineages that appear in the North East are
 We allocate the lineages’ trajectories to the North East according to
 the extent to which they were in the North East vs. other regions, by
 (a) spreading each sample over up to seven days, (b) filling in any
-empty days linearly from non-zero neighbouring day, and (c) normalising
-each day, so that on each day the lineage’s effective population is
-distributed between the constituent regions:
+empty days linearly from a non-zero neighbouring day, and (c)
+normalising each day, so that on each day the lineage’s effective
+population is distributed between the constituent regions:
 
 ![](README_files/figure-gfm/plot%20inputs-1.png)<!-- -->
 
@@ -28,6 +28,7 @@ lineages:
 
 ![](README_files/figure-gfm/Ne-1.png)<!-- -->
 
-For all regions:
+The effective population size over all lineages for the North East is
+noisy, but also very small. It’s larger for other regions:
 
 ![](README_files/figure-gfm/plot%20all%20regions-1.png)<!-- -->
