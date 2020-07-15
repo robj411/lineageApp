@@ -334,8 +334,6 @@ shiny::shinyServer(function(input, output, session) {
   re.filename <- reactiveVal( parms$filename )
   re.filename_tree <- reactiveVal( parms$filename_tree )
   re.hist <- reactiveVal( 'Combined' )
-  re.ci <- reactiveVal( 1 )
-  re.log_size <- reactiveVal( F )
   
   ## unique with na.rm
   unique.narm <- function(x,column='lad'){
@@ -376,15 +374,6 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   ## skygrowth ########################################################
-  ## plot credible intervals?
-  observeEvent( input$ti_ci, {
-    re.ci( input$ti_ci )
-  })
-  ## log size?
-  observeEvent( input$ti_log_size, {
-    re.log_size( input$ti_log_size )
-  })
-  
   ## plot all D or all G?
   observeEvent( input$ti_DGX, {
     new_labs <- as.numeric(parms$geno_labs%in%input$ti_DGX)
@@ -422,9 +411,8 @@ shiny::shinyServer(function(input, output, session) {
     list(lineage,l_ind)
   })
   
-  prep_plot <- function(metric='growth'){
-    ci <- re.ci() 
-    log_size <- metric=='Ne' & re.log_size()
+  prep_plot <- function(metric='growth',ci=1,log_size=F){
+    log_size <- metric=='Ne' & log_size
     groups <- input$ti_groups
     if(is.null(groups)){
       lin <- update_lineage()
@@ -453,17 +441,35 @@ shiny::shinyServer(function(input, output, session) {
       return(p0)
     }
   }
+  blueheat <- function(tab,collabs){
+    rowlabs <- rownames(tab)
+    get.pal=colorRampPalette(brewer.pal(9,"Blues"))
+    redCol=rev(get.pal(14))
+    bkT <- seq(max(tab)+1e-10, 0,length=15)
+    cex.lab <- 1.5
+    maxval <- round(bkT[1],digits=1)
+    col.labels<- c(0,maxval/2,maxval)
+    cellcolors <- vector()
+    for(ii in 1:length(unlist(tab)))
+      cellcolors[ii] <- redCol[tail(which(unlist(tab[ii])<bkT),n=1)]
+    color2D.matplot(tab,cellcolors=cellcolors,main="",xlab="",ylab="",cex.lab=2,axes=F,border='white')
+    fullaxis(side=1,las=2,at=1:ncol(tab)-0.5,labels=collabs,line=NA,pos=NA,outer=FALSE,font=NA,lwd=0,cex.axis=1)
+    fullaxis(side=2,las=1,at=(length(rowlabs)-1):0+0.5,labels=rowlabs,line=NA,pos=NA,outer=FALSE,font=NA,lwd=0,cex.axis=1)
+    color.legend(ncol(tab)+0.5,0,ncol(tab)+1.5,length(rowlabs),col.labels,rev(redCol),gradient="y",cex=1,align="rb")
+  }
   
-  output$GR <- renderPlot({
-    plot( prep_plot(metric='growth'))
-  })
-  
-  output$R <- renderPlot({
-    plot( prep_plot(metric='R'))
-  })
-  
-  output$Ne <- renderPlot({
-    suppressWarnings(plot( prep_plot(metric='Ne')))
+  observe({
+    ci <- input$ti_ci
+    output$GR <- renderPlot({
+      plot( prep_plot(metric='growth',ci=ci))
+    })
+    output$R <- renderPlot({
+      plot( prep_plot(metric='R',ci=ci))
+    })
+    log_size <- input$ti_log_size
+    output$Ne <- renderPlot({
+      suppressWarnings(plot( prep_plot(metric='Ne',ci=ci,log_size=log_size)))
+    })
   })
   
   output$legend <- renderPlot({
@@ -487,22 +493,6 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   ## regions by lineage ########################################################
-  blueheat <- function(tab,collabs){
-    rowlabs <- rownames(tab)
-    get.pal=colorRampPalette(brewer.pal(9,"Blues"))
-    redCol=rev(get.pal(14))
-    bkT <- seq(max(tab)+1e-10, 0,length=15)
-    cex.lab <- 1.5
-    maxval <- round(bkT[1],digits=1)
-    col.labels<- c(0,maxval/2,maxval)
-    cellcolors <- vector()
-    for(ii in 1:length(unlist(tab)))
-      cellcolors[ii] <- redCol[tail(which(unlist(tab[ii])<bkT),n=1)]
-    color2D.matplot(tab,cellcolors=cellcolors,main="",xlab="",ylab="",cex.lab=2,axes=F,border='white')
-    fullaxis(side=1,las=2,at=1:ncol(tab)-0.5,labels=collabs,line=NA,pos=NA,outer=FALSE,font=NA,lwd=0,cex.axis=1)
-    fullaxis(side=2,las=1,at=(length(rowlabs)-1):0+0.5,labels=rowlabs,line=NA,pos=NA,outer=FALSE,font=NA,lwd=0,cex.axis=1)
-    color.legend(ncol(tab)+0.5,0,ncol(tab)+1.5,length(rowlabs),col.labels,rev(redCol),gradient="y",cex=1,align="rb")
-  }
   ## bar plot lineage by region
   observe({
     lin <- sapply(input$ti_filename_region,function(x)strsplit(as.character(x),' \\(')[[1]][1])
@@ -524,15 +514,15 @@ shiny::shinyServer(function(input, output, session) {
   
   ## regions and lineages ########################################
   observe({
-  output$heatmap <- renderPlot({
-    par(mar=c(5,12,1,5.5))
-    normalisation <- input$ti_heat_norm
-    tab <- parms$region_table
-    collabs <- colnames(parms$region_table)
-    if(normalisation=='By lineage') for(i in 1:ncol(tab)) tab[,i] <- tab[,i]/sum(tab[,i])
-    if(normalisation=='By region') for(i in 1:nrow(tab)) tab[i,] <- tab[i,]/sum(tab[i,])
-    blueheat(tab,collabs)
-  })
+    output$heatmap <- renderPlot({
+      par(mar=c(5,12,1,5.5))
+      normalisation <- input$ti_heat_norm
+      tab <- parms$region_table
+      collabs <- colnames(parms$region_table)
+      if(normalisation=='By lineage') for(i in 1:ncol(tab)) tab[,i] <- tab[,i]/sum(tab[,i])
+      if(normalisation=='By region') for(i in 1:nrow(tab)) tab[i,] <- tab[i,]/sum(tab[i,])
+      blueheat(tab,collabs)
+    })
   })
   
   ## tree ########################################################
@@ -557,7 +547,7 @@ shiny::shinyServer(function(input, output, session) {
     #height = 3*hgt+500)
   })
   
-  ## lineages
+  ## lineages #####################################################
   output$lineages <- DT::renderDataTable({
     datatable(parms$lineage_table,options = list("pageLength" = 500),rownames=F)
   })
@@ -571,10 +561,10 @@ shiny::shinyServer(function(input, output, session) {
       write.csv(parms$lineage_table, file, row.names = F)
     })
   
-  ## sequences: show all sequences button
+  ## sequences: show all sequences button ##############################
   observe({
     show_all_sequences <- input$show_all_sequences
-    tab <- parms$sequences
+    tab <- parms$sequences[,colnames(parms$sequences)%in%c("Sequence","Date","Lineage","central_sample_id","adm1")]
     if(!show_all_sequences){
       fname <- re.filename_tree() 
       l_ind <- match(fname,parms$labels)
