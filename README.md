@@ -28,7 +28,17 @@ lineages:
 
 ![](README_files/figure-gfm/Ne-1.png)<!-- -->
 
-The effective population size over all lineages for the North East is
-noisy, but also very small. It’s larger for other regions:
+# All regions
 
-![](README_files/figure-gfm/plot%20all%20regions-1.png)<!-- -->
+The effective population size over all lineages for the North East is
+noisy, but also very small. It’s larger for other regions (all
+trajectories smoothed as seven-day average):
+
+![](README_files/figure-gfm/plot%20Ne%20all%20regions-1.png)<!-- -->
+
+Effective growth rates:
+
+![](README_files/figure-gfm/plot%20growth%20all%20regions-1.png)<!-- -->
+Effective reproduction numbers:
+
+![](README_files/figure-gfm/plot%20R%20all%20regions-1.png)<!-- -->
