@@ -18,7 +18,8 @@ shinyUI(
              <p>Samples from lineages are summarised over time and geography in the UK according to the details of the constituent sequences.  
              </p>
              <p>Skygrowth curves show aspects of UK lineages constructed using <a href='https://github.com/emvolz-phylodynamics/sarscov2Rutils' target='_blank'>sarscov2Rutils</a>. 
-             Graphs show the time-dependent effective reproduction number (the average number of secondary cases per primary case over time), the effective population size (the number of individuals weighted by their contribution to producing the next generation) and the effective growth rate. </p>
+             Graphs show the time-dependent effective reproduction number (the average number of secondary cases per primary case over time), the effective population size (the number 
+             of individuals weighted by their contribution to producing the next generation) and the effective growth rate (the growth rate of the effective population size). </p>
              <p>Lineages' curves are currently annotated in terms of their S (spike) protein variant as D/G in position 614 from
              <a href='https://microreact.org/project/cogconsortium-2020-06-19/da7c0270/' target='_blank'> 
 https://microreact.org/project/cogconsortium-2020-06-19/da7c0270/</a>.</p>
