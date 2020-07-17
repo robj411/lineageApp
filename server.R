@@ -173,6 +173,13 @@ if(file.exists('datasets/lineageSetup.Rdata')){
     }
     plt <- ggplot(subseq, aes(x=as.Date(Date), fill=eval(parse(text=label_column)))) +
       geom_histogram(bins=30,alpha=0.5, position="identity", color="black")
+    if(geog=='Country'){
+      countries <- sort(unique(sequ$country))
+      cols <- c('navyblue','turquoise','hotpink','grey','darkorange')
+      names(cols) <- countries
+      colScale <- scale_fill_manual(values = cols)
+      plt = plt + colScale
+    }
     if(geog!='Combined'&length(geog_levels)>1) {
       plt <- plt + guides(fill=guide_legend(title=label_column)) + 
         theme(legend.text=element_text(size=14),legend.title=element_text(size=14),legend.position="top")
@@ -274,8 +281,8 @@ if(file.exists('datasets/lineageSetup.Rdata')){
         if(parms$p614[i]%in%DGSlist[[dg]]){
           # weight growth rate by effective sample size
           lintab <- lineages[[i]][[metric]]
-          #lintab$weight <- lineages[[i]]$Ne$pc50
-          lintab$weight <- subset(parms$lineage_table,Lineage==ids[i])$Number.of.samples
+          lintab$weight <- lineages[[i]]$Ne$pc50
+          #lintab$weight <- subset(parms$lineage_table,Lineage==ids[i])$Number.of.samples
           # exclude anything explolated beyond 14 days
           most_recent_sample <- as.Date(subset(parms$lineage_table,Lineage==ids[i])$Most.recent.date)
           close_in_time_to_sample <- subset(lintab,time<most_recent_sample+14)
@@ -294,22 +301,14 @@ if(file.exists('datasets/lineageSetup.Rdata')){
       }
       grouptraj <- as.data.frame(t(sapply(uniquetimes,function(j){
         temp <- subset(combined,days==j)
-        mu <- mean(temp$pc50)
-        sd <- sqrt(sum(temp$var)/nrow(temp)^2)
-        if(metric=='growth') {
-          weights <- temp$weight
-          weights <- weights/mean(weights)
-          mu <- sum(temp$pc50*weights)/sum(weights)
-          sd <- sqrt(sum(temp$var*weights)/sum(weights)^2)
-        }
+        out <- c()
+        temp <- subset(temp,!is.na(pc97.5))
         if(metric=='Ne') {
-          out <- c()
-          temp <- subset(temp,!is.na(pc97.5))
           for(i in 1:1000) out[i] <- sum((rnorm(nrow(temp),mean=temp$pc50,sd=sqrt(temp$var))))
-          c(j,quantile(out,c(0.025,0.5,0.975)))
         }else{
-          c(j,qnorm(c(0.025,0.5,0.975),mean=mu,sd=sd))
+          for(i in 1:1000) out[i] <- sum(temp$weight*rnorm(nrow(temp),mean=temp$pc50,sd=sqrt(temp$var))) / sum(temp$weight)
         }
+        c(j,quantile(out,c(0.025,0.5,0.975)))
       })))
       colnames(grouptraj) <- colnames(blocks[[1]])[1:4]
       for(i in 2:4) grouptraj[,i] <- as.numeric(as.character(grouptraj[,i]))
