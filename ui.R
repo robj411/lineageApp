@@ -23,7 +23,7 @@ shinyUI(
              <p>Lineages' curves are currently annotated in terms of their S (spike) protein variant as D/G in position 614 from
              <a href='https://microreact.org/project/cogconsortium-2020-06-19/da7c0270/' target='_blank'> 
 https://microreact.org/project/cogconsortium-2020-06-19/da7c0270/</a>.</p>
-             <p>Phylogenetic trees are contructed by <a href='https://cran.r-project.org/web/packages/treedater/index.html' target='_blank'>treedater</a>.</p>
+             <p>Phylogenetic trees are constructed by <a href='https://cran.r-project.org/web/packages/treedater/index.html' target='_blank'>treedater</a>.</p>
              <p>Tabulated sequences are currently annotated as S-variant D/G/X and by location of collection from
              <a href='www.cogconsortium.uk' target='_blank'> 
 CoG-UK</a>.</p>
