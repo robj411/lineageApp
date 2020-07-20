@@ -36,6 +36,10 @@ trajectories smoothed as seven-day average):
 
 ![](README_files/figure-gfm/plot%20Ne%20all%20regions-1.png)<!-- -->
 
+Effective growth rates and effective reproduction numbers are combined
+similarly, weighted by (smoothed) effective population sizes, and then
+smoothed in turn.
+
 Effective growth rates:
 
 ![](README_files/figure-gfm/plot%20growth%20all%20regions-1.png)<!-- -->
