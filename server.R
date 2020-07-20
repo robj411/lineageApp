@@ -12,9 +12,9 @@ library(dplyr)
 library(RColorBrewer)
 library(plotrix)
 
-scale_fill_discrete <- function(...) {
-  scale_fill_brewer(..., palette="Accent")
-}
+#scale_fill_discrete <- function(...) {
+#  scale_fill_brewer(..., palette="Accent")
+#}
 
 if(file.exists('datasets/lineageSetup.Rdata')){
   load('datasets/lineageSetup.Rdata')
@@ -335,7 +335,7 @@ if(file.exists('datasets/lineageSetup.Rdata')){
   names(parms$region_date_lineage_table) <- parms$lineage_table$Lineage
   ## split so it's not identifiable
   parms$sequences_geog <- parms$sequences[,colnames(parms$sequences)%in%c("Date","Lineage","adm2","adm1","d614g", "location","mapto","lad","county","region","country")]
-  parms$sequences <- parms$sequences[,colnames(parms$sequences)%in%c("Sequence","Date","Lineage","central_sample_id","adm1","d614g")]
+  parms$sequences <- parms$sequences[,colnames(parms$sequences)%in%c("Sequence","Date","Lineage","gisaid_epi_isl","adm1","d614g")]
   ## shuffle
   parms$sequences_geog$Date <- as.Date(sapply(parms$sequences_geog$Date,function(x)strsplit(as.character(x),' ')[[1]][1]))
   parms$sequences_geog <- parms$sequences_geog[sample(1:nrow(parms$sequences_geog),replace=F),]
@@ -575,7 +575,7 @@ shiny::shinyServer(function(input, output, session) {
   ## sequences: show all sequences button ##############################
   observe({
     show_all_sequences <- input$show_all_sequences
-    tab <- parms$sequences[,colnames(parms$sequences)%in%c("Sequence","Date","Lineage","central_sample_id","adm1")]
+    tab <- parms$sequences[,colnames(parms$sequences)%in%c("Sequence","Date","Lineage","gisaid_epi_isl","adm1")]
     if(!show_all_sequences){
       fname <- re.filename_tree() 
       l_ind <- match(fname,parms$labels)
