@@ -20,9 +20,11 @@ shinyUI(
              <p>Skygrowth curves show aspects of UK lineages constructed using <a href='https://github.com/emvolz-phylodynamics/sarscov2Rutils' target='_blank'>sarscov2Rutils</a>. 
              Graphs show the time-dependent effective reproduction number (the average number of secondary cases per primary case over time), the effective population size (the number 
              of individuals weighted by their contribution to producing the next generation) and the effective growth rate (the growth rate of the effective population size). </p>
-             <p>Lineages' curves are currently annotated in terms of their S (spike) protein variant as D/G in position 614 from
+             <p>Lineage skygrowth curves are currently annotated in terms of their S (spike) protein variant as D/G in position 614 from
              <a href='https://microreact.org/project/cogconsortium-2020-06-19/da7c0270/' target='_blank'> 
 https://microreact.org/project/cogconsortium-2020-06-19/da7c0270/</a>.</p>
+             <p>Region skygrowth curves are constructed as weighted, smoothed sums of the lineages' curves, as described 
+             <a href='https://github.com/robj411/lineageApp/' target='_blank'>here</a>.</p>
              <p>Phylogenetic trees are constructed by <a href='https://cran.r-project.org/web/packages/treedater/index.html' target='_blank'>treedater</a>.</p>
              <p>Tabulated sequences are currently annotated as S-variant D/G/X and by location of collection from
              <a href='www.cogconsortium.uk' target='_blank'> 
@@ -61,7 +63,7 @@ CoG-UK</a>.</p>
                         tabPanel("Lineages by region",
                                  column(5,fluidRow(
                                         selectInput('ti_region', label = 'Region', NULL),
-                                        sliderInput("ti_window", label = "Time window",
+                                        sliderInput("ti_window", label = "Time window for lineage samples",
                                                     min = as.Date("2020-02-03","%Y-%m-%d"),
                                                     max = as.Date(lubridate::today(),"%Y-%m-%d"),
                                                     value=c(as.Date("2020-02-03"),as.Date(lubridate::today())),
@@ -69,11 +71,13 @@ CoG-UK</a>.</p>
                                  )
                                  ,
                                  fluidRow(plotOutput( 'linbyregion', width = "90%", height = "auto"), align="left"),
+                                 h4("Samples over time"),
                                  fluidRow(plotOutput( 'hist_by_location2', width = "100%", height = "400px"), align="left")
                                  )
                                  ,
-                                 column(7,
-                                   fluidRow( plotOutput( 'GR_reg', width = "100%", height = "300px"))
+                                 column(5,
+                                        h4("Combined skygrowth curves"),
+                                        fluidRow( plotOutput( 'GR_reg', width = "100%", height = "300px"))
                                    , fluidRow( plotOutput( 'R_reg', width = "100%", height = "300px" ) )
                                    , fluidRow( plotOutput( 'Ne_reg', width = "100%", height = "300px" ) )
                                  )
