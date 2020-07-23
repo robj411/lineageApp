@@ -59,7 +59,7 @@ CoG-UK</a>.</p>
                                  #column(6, plotOutput( 'hist_by_location3', width = "100%", height = "400px"))
                         ),
                         tabPanel("Lineages by region",
-                                 column(2,
+                                 column(5,fluidRow(
                                         selectInput('ti_region', label = 'Region', NULL),
                                         sliderInput("ti_window", label = "Time window",
                                                     min = as.Date("2020-02-03","%Y-%m-%d"),
@@ -68,8 +68,16 @@ CoG-UK</a>.</p>
                                                     timeFormat="%Y-%m-%d"),align='center'
                                  )
                                  ,
-                                 column(5, plotOutput( 'linbyregion', width = "90%", height = "auto"), align="center"),
-                                 column(5, plotOutput( 'hist_by_location2', width = "100%", height = "400px"), align="left")
+                                 fluidRow(plotOutput( 'linbyregion', width = "90%", height = "auto"), align="left"),
+                                 fluidRow(plotOutput( 'hist_by_location2', width = "100%", height = "400px"), align="left")
+                                 )
+                                 ,
+                                 column(7,
+                                   fluidRow( plotOutput( 'GR_reg', width = "100%", height = "300px"))
+                                   , fluidRow( plotOutput( 'R_reg', width = "100%", height = "300px" ) )
+                                   , fluidRow( plotOutput( 'Ne_reg', width = "100%", height = "300px" ) )
+                                 )
+                                 
                         ),
                         tabPanel("Regions by lineage",
                                  column(2, selectInput('ti_filename_region', label = 'Lineage', NULL),align='center'),
@@ -83,6 +91,7 @@ CoG-UK</a>.</p>
                       column(3, id = "menu",
                              div(id = "1.2",
                                  div(id = "incidence_data_type_error_box", class = "error_box",
+                                     selectInput('ti_curve', label = '', c('By lineage','By region'),selected='By lineage'),
                                      checkboxInput('ti_ci', label = "Credible intervals", 1),
                                      checkboxInput(inputId='ti_log_size', label='Effective size on log scale', value=F)
                                      , checkboxGroupInput(inputId='ti_DGX', label='Genotypes', choices = NULL, selected = NULL)
