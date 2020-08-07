@@ -92,6 +92,7 @@ lineage_names = names( tres )
     tr$edge.length <- pmax(1/29000/5, tr$edge.length)
     tr
   })
+  print(c(threads,ncpu))
   tds <- parallel::mclapply(tres, function(tr) {
     dater(unroot(tr)
           , sts[tr$tip.label]
