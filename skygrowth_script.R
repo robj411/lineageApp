@@ -15,10 +15,10 @@ use_gtds = TRUE
 minsize = 50
 maxsize = 4000 # will downsample to this value 
 
-nthreads = 4
-ncpu = 20
+nthreads = 1
+ncpu = 16
 
-ntrees = 20 
+ntrees = 16
 SGSTART <- as.Date('2020-01-15' )
 MHSTEPS <- 5e5
 RES = 60
@@ -123,9 +123,9 @@ lineage_names = names( tres )
     a = capture.output({
       gtds = parallel::mclapply( tds, function(td) gibbs_jitter( td, returnTrees=2 )[[2]] , mc.cores = ncpu*nthreads )
     })
-    sg0 = skygrowth1( gtds, tau0 = TAU0, res = RES, ncpu = ncpu ,  tstart = decimal_date(SGSTART), mhsteps = MHSTEPS, last_sample_time=last_sample_time)
+    sg0 = skygrowth1( gtds, tau0 = TAU0, res = RES, ncpu = ncpu ,  tstart = decimal_date(SGSTART), mhsteps = MHSTEPS)
   } else{
-    sg0 = skygrowth1( tds, tau0 = TAU0, res = RES, ncpu = ncpu ,  tstart = decimal_date(SGSTART), mhsteps = MHSTEPS,last_sample_time=last_sample_time)
+    sg0 = skygrowth1( tds, tau0 = TAU0, res = RES, ncpu = ncpu ,  tstart = decimal_date(SGSTART), mhsteps = MHSTEPS)
     gtds = tds 
   }
   
