@@ -101,7 +101,7 @@ shiny::shinyServer(function(input, output, session) {
       output$legend <- renderPlot({
         par(mar=c(0,0,0,0)); plot.new()#plot(c(0,1),c(0,1)); 
         legend(x=0,y=1,col=unique(parms$cols),lwd=3,bty='n',
-               legend=unique(parms$p614),cex=1.25,title='S614 variant')
+               legend=unique(as.character(parms$lineage_table$p614)),cex=1.25,title='S614 variant')
       })
     }
   })
@@ -112,7 +112,7 @@ shiny::shinyServer(function(input, output, session) {
     ## only if there was a change to selection
     if(length(group_to_update)>0){
       old_selected <- input$ti_filename
-      labs_to_include_or_exclude <- parms$labels[parms$p614%in%unique(parms$p614)[group_to_update]]
+      labs_to_include_or_exclude <- parms$labels[as.character(parms$lineage_table$p614)%in%unique(as.character(parms$lineage_table$p614))[group_to_update]]
       ## either add a set or remove a set
       if(new_labs[group_to_update]==1){
         new_selected <- unique(c(old_selected,labs_to_include_or_exclude))
@@ -286,7 +286,7 @@ shiny::shinyServer(function(input, output, session) {
   
   ## lineages #####################################################
   output$lineages <- DT::renderDataTable({
-    datatable(parms$lineage_table,options = list("pageLength" = 500),rownames=F)
+    datatable(parms$lineage_table[,colnames(parms$lineage_table)%in%c("Lineage","p614","Number.of.samples", "First.date","Most.recent.date")],options = list("pageLength" = 500),rownames=F)
   })
   
   ## lineages: download button
@@ -295,7 +295,7 @@ shiny::shinyServer(function(input, output, session) {
       paste("lineage-dataset-", Sys.Date(), ".csv", sep="")
     },
     content = function(file) {
-      write.csv(parms$lineage_table, file, row.names = F)
+      write.csv(parms$lineage_table[,colnames(parms$lineage_table)%in%c("Lineage","p614","Number.of.samples", "First.date","Most.recent.date")], file, row.names = F)
     })
   
   ## sequences: show all sequences button ##############################
