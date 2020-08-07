@@ -8,8 +8,6 @@ v3:
 # library(devtools)
 # install_github('https://github.com/emvolz/treedater')
 
-setwd('~/overflow_dropbox/lineageApp/')
-
 path = 'datasets/uk_lineages/' # directory with tree files
 mdfn = 'datasets/majora_trimmed.csv' # path to csv 
 
