@@ -20,13 +20,11 @@ shinyUI(
              <p>Skygrowth curves show aspects of UK lineages constructed using <a href='https://github.com/emvolz-phylodynamics/sarscov2Rutils' target='_blank'>sarscov2Rutils</a>. 
              Graphs show the time-dependent effective reproduction number (the average number of secondary cases per primary case over time), the effective population size (the number 
              of individuals weighted by their contribution to producing the next generation) and the effective growth rate (the growth rate of the effective population size). </p>
-             <p>Lineage skygrowth curves are currently annotated in terms of their S (spike) protein variant as D/G in position 614 from
-             <a href='https://microreact.org/project/cogconsortium-2020-06-19/da7c0270/' target='_blank'> 
-https://microreact.org/project/cogconsortium-2020-06-19/da7c0270/</a>.</p>
+             <p>Lineage skygrowth curves are annotated in terms of their S (spike) protein variant as D/G in position 614.</p>
              <p>Region skygrowth curves are constructed as weighted, smoothed sums of the lineages' curves, as described 
              <a href='https://github.com/robj411/lineageApp/' target='_blank'>here</a>.</p>
              <p>Phylogenetic trees are constructed by <a href='https://cran.r-project.org/web/packages/treedater/index.html' target='_blank'>treedater</a>.</p>
-             <p>Tabulated sequences are currently annotated as S-variant D/G/X and by location of collection from
+             <p>Tabulated sequences are annotated as S-variant D/G/X and by location of collection from
              <a href='www.cogconsortium.uk' target='_blank'> 
 CoG-UK</a>.</p>
              "
