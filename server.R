@@ -24,9 +24,9 @@ shiny::shinyServer(function(input, output, session) {
   combined_labs <- c('Combined "D"','Combined "G"','Combined "D" and "G"')
   updateCheckboxGroupInput(session, inputId='ti_DGX', label='Genotypes', choices = parms$geno_labs)
   updateCheckboxGroupInput(session, inputId='ti_groups', label='', choices = combined_labs)
-  updateCheckboxGroupInput(session, inputId='ti_filename', label = 'Lineages', choices = parms$labels, selected = parms$labels[which(parms$ids=='UK5')])
-  updateSelectInput(session, inputId='ti_filename_tree', label = 'Lineage', choices = parms$labels, selected = parms$labels[which(parms$ids=='UK5')])
-  updateSelectInput(session, inputId='ti_filename_region', label = 'Lineage', choices = parms$labels, selected = parms$labels[which(parms$ids=='UK5')])
+  updateCheckboxGroupInput(session, inputId='ti_filename', label = 'Lineages', choices = as.character(parms$lineage_table$labels), selected = as.character(parms$lineage_table$labels)[which(as.character(parms$lineage_table$ids)=='UK5')])
+  updateSelectInput(session, inputId='ti_filename_tree', label = 'Lineage', choices = as.character(parms$lineage_table$labels), selected = as.character(parms$lineage_table$labels)[which(as.character(parms$lineage_table$ids)=='UK5')])
+  updateSelectInput(session, inputId='ti_filename_region', label = 'Lineage', choices = as.character(parms$lineage_table$labels), selected = as.character(parms$lineage_table$labels)[which(as.character(parms$lineage_table$ids)=='UK5')])
   updateSelectInput(session, inputId='ti_region', label = 'Region', choices = unique(parms$sequences_geog$region), selected = 'london')
   
   ## initialise reactive values
@@ -79,7 +79,7 @@ shiny::shinyServer(function(input, output, session) {
       hide('ti_DGX')
       hide('ti_groups')
       reg.options <- names(parms$region_lineage)
-      reg.colors <- parms$cols[1:length(parms$region_lineage)+length(parms$labels)]
+      reg.colors <- parms$cols[1:length(parms$region_lineage)+length(as.character(parms$lineage_table$labels))]
       reg.fun <- lapply(reg.options,function(o)
         tags$div(
           HTML(paste(tags$span('―',style = paste0('font-weight: bold; color: ', reg.colors[which(reg.options == o)],';')),o, sep = " "))
@@ -97,7 +97,7 @@ shiny::shinyServer(function(input, output, session) {
     }else{
       show('ti_DGX')
       show('ti_groups')
-      updateCheckboxGroupInput(session, inputId='ti_filename', label = 'Lineages', choices = parms$labels, selected = parms$labels[which(parms$ids=='UK5')])
+      updateCheckboxGroupInput(session, inputId='ti_filename', label = 'Lineages', choices = as.character(parms$lineage_table$labels), selected = as.character(parms$lineage_table$labels)[which(as.character(parms$lineage_table$ids)=='UK5')])
       output$legend <- renderPlot({
         par(mar=c(0,0,0,0)); plot.new()#plot(c(0,1),c(0,1)); 
         legend(x=0,y=1,col=unique(parms$cols),lwd=3,bty='n',
@@ -112,7 +112,7 @@ shiny::shinyServer(function(input, output, session) {
     ## only if there was a change to selection
     if(length(group_to_update)>0){
       old_selected <- input$ti_filename
-      labs_to_include_or_exclude <- parms$labels[as.character(parms$lineage_table$p614)%in%unique(as.character(parms$lineage_table$p614))[group_to_update]]
+      labs_to_include_or_exclude <- as.character(parms$lineage_table$labels)[as.character(parms$lineage_table$p614)%in%unique(as.character(parms$lineage_table$p614))[group_to_update]]
       ## either add a set or remove a set
       if(new_labs[group_to_update]==1){
         new_selected <- unique(c(old_selected,labs_to_include_or_exclude))
@@ -140,9 +140,9 @@ shiny::shinyServer(function(input, output, session) {
     if(input$ti_curve=='By region'){
       l_ind <- match(fname,names(parms$region_lineage)) 
       lineage <- lapply(l_ind,function(x)parms$region_lineage[[x]])
-      l_ind <- l_ind + length(parms$labels)
+      l_ind <- l_ind + length(as.character(parms$lineage_table$labels))
     }else{
-      l_ind <- match(fname,parms$labels)
+      l_ind <- match(fname,as.character(parms$lineage_table$labels))
       lineage <- lapply(l_ind,function(x)parms$lineages[[x]])
     }
     list(lineage,l_ind)
@@ -275,7 +275,7 @@ shiny::shinyServer(function(input, output, session) {
     if(input$ti_tree_colour =='Location') anno <- 'location'
     if(input$ti_tree_colour =='Country') anno <- 'country'
     fname <- re.filename_tree() 
-    l_ind <- match(fname,parms$labels)
+    l_ind <- match(fname,as.character(parms$lineage_table$labels))
     #hgt <- length(parms$tree[[l_ind]]$Ti)
     #output$tree <- renderPlot({
     output$tree <- renderPlotly({
@@ -304,8 +304,8 @@ shiny::shinyServer(function(input, output, session) {
     tab <- parms$sequences[,colnames(parms$sequences)%in%c("Sequence","Date","Lineage","gisaid_epi_isl","adm1")]
     if(!show_all_sequences){
       fname <- re.filename_tree() 
-      l_ind <- match(fname,parms$labels)
-      tab <- subset(tab,Lineage%in%parms$ids[l_ind])
+      l_ind <- match(fname,as.character(parms$lineage_table$labels))
+      tab <- subset(tab,Lineage%in%as.character(parms$lineage_table$ids)[l_ind])
     }
     output$sequences <- DT::renderDataTable({
       datatable(tab,options = list("pageLength" = 500),rownames=F)
