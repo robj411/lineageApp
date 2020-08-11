@@ -301,7 +301,7 @@ shiny::shinyServer(function(input, output, session) {
   ## sequences: show all sequences button ##############################
   observe({
     show_all_sequences <- input$show_all_sequences
-    tab <- parms$sequences[,colnames(parms$sequences)%in%c("Sequence","Date","Lineage","gisaid_epi_isl","adm1")]
+    tab <- parms$sequences[,colnames(parms$sequences)%in%c("Sequence","Lineage","gisaid_epi_isl","adm1")]
     if(!show_all_sequences){
       fname <- re.filename_tree() 
       l_ind <- match(fname,as.character(parms$lineage_table$labels))
