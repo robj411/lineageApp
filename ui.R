@@ -51,11 +51,11 @@ shinyUI(
                  HTML(
                    "
                    <p>A Rambaut, EC Holmes, Á O’Toole et al. 
-             <a href='https://doi.org/10.1038/s41564-020-0770-5' target='_blank'>A dynamic nomenclature proposal for SARS-CoV-2 lineages to assist genomic epidemiology.</a>
+             <a href='https://doi.org/10.1038/s41564-020-0770-5' target='_blank'>A dynamic nomenclature proposal for SARS-CoV-2 lineages to assist genomic epidemiology</a>
               Nat Microbiol (2020).</p>
              <p>EM Volz, SDW Frost 
-             <a href='https://doi.org/10.1093/ve/vex025' target='_blank'>Scalable relaxed clock phylogenetic dating.</a>
-              Virus Evolution, 3:2 (2017).</p>
+             <a href='https://doi.org/10.1093/ve/vex025' target='_blank'>Scalable relaxed clock phylogenetic dating</a>
+              Virus Evolution (2017).</p>
               <p>EM Volz, X Didelot
              <a href='https://doi.org/10.1093/sysbio/syy007' target='_blank'> Modeling the growth and decline of pathogen effective population size provides insight into epidemic dynamics and drivers of antimicrobial resistance</a>
               Systematic Biology (2018).</p>
