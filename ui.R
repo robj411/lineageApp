@@ -12,7 +12,7 @@ shinyUI(
     column(12,
            HTML(
              "
-             <meta name='keywords' content='infectious,disease,epidemiology,genome,coronavirus,SARS-CoV-2,phylogenetics,lineage,mutation,Spike,UK'>
+             <meta name='keywords' content='infectious,disease,epidemiology,genome,coronavirus,SARS-CoV-2,phylodynamic,phylogenetics,lineage,mutation,Spike,UK'>
              <meta name='author' content='Rob Johnson'>
              <h1>COG-UK Phylodynamics dashboard: UK Lineages and Spike 614</h1>
              "
