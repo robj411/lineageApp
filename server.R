@@ -188,16 +188,18 @@ shiny::shinyServer(function(input, output, session) {
     ci <- input$ti_ci
     fname <- re.filename() 
     lin <- update_lineage(fname)
-    output$GR <- renderPlot({
-      suppressWarnings(plot( prep_plot(metric='growth',ci=ci,lin=lin)))
-    })
-    output$R <- renderPlot({
-      suppressWarnings(plot( prep_plot(metric='R',ci=ci,lin=lin)))
-    })
-    log_size <- input$ti_log_size
-    output$Ne <- renderPlot({
-      suppressWarnings(plot( prep_plot(metric='Ne',ci=ci,log_size=log_size,lin=lin)))
-    })
+    if(!is.na(lin[[2]])){
+      output$GR <- renderPlot({
+        suppressWarnings(plot( prep_plot(metric='growth',ci=ci,lin=lin)))
+      })
+      output$R <- renderPlot({
+        suppressWarnings(plot( prep_plot(metric='R',ci=ci,lin=lin)))
+      })
+      log_size <- input$ti_log_size
+      output$Ne <- renderPlot({
+        suppressWarnings(plot( prep_plot(metric='Ne',ci=ci,log_size=log_size,lin=lin)))
+      })
+    }
   })
   
   ## lineage by region ########################################################
