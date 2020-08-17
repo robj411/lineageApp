@@ -188,7 +188,7 @@ shiny::shinyServer(function(input, output, session) {
     ci <- input$ti_ci
     fname <- re.filename() 
     lin <- update_lineage(fname)
-    if(!is.na(lin[[2]])){
+    if(!is.na(lin[[2]][1])){
       output$GR <- renderPlot({
         suppressWarnings(plot( prep_plot(metric='growth',ci=ci,lin=lin)))
       })
