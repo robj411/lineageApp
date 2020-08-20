@@ -60,7 +60,7 @@ shinyUI(
              <a href='https://doi.org/10.1093/sysbio/syy007' target='_blank'> Modeling the growth and decline of pathogen effective population size provides insight into epidemic dynamics and drivers of antimicrobial resistance</a>
               Systematic Biology (2018).</p>
               <p>EM Volz, V Hill, JT McCrone et al. 
-             <a href='link' target='_blank'>Evaluating the effects of SARS-CoV-2 Spike mutation D614G on transmissibility and pathogenicity</a>
+             <a href='https://www.medrxiv.org/content/10.1101/2020.07.31.20166082v1' target='_blank'>Evaluating the effects of SARS-CoV-2 Spike mutation D614G on transmissibility and pathogenicity</a>
                (2020).</p>
              "
                  )
