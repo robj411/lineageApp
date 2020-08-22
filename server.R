@@ -280,6 +280,7 @@ shiny::shinyServer(function(input, output, session) {
     l_ind <- match(fname,as.character(parms$lineage_table$labels))
     #hgt <- length(parms$tree[[l_ind]]$Ti)
     #output$tree <- renderPlot({
+    if(fname!='')
     output$tree <- renderPlotly({
       quick_annotated_treeplot(parms$tree[[l_ind]],annotation = anno) #%>% layout(height = 3*hgt+500)
     })#, 
