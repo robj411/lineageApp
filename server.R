@@ -49,15 +49,24 @@ shiny::shinyServer(function(input, output, session) {
     re.hist( input$ti_hist )
     geog <- input$ti_hist
     if(geog=='Combined')
-      updateCheckboxGroupInput(session, inputId='ti_hist_level2', label = '', NULL)
-    if(geog=='Country')
+      hide('ti_hist_level2')
+      #updateCheckboxGroupInput(session, inputId='ti_hist_level2', label = '', NULL)
+    if(geog=='Country'){
+      show('ti_hist_level2')
       updateCheckboxGroupInput(session, inputId='ti_hist_level2', label = 'Country', choices = unique.narm(parms$sequences_geog$country,'country'), selected = 'england')
-    if(geog=='Region')
+    }
+    if(geog=='Region'){
+      show('ti_hist_level2')
       updateCheckboxGroupInput(session, inputId='ti_hist_level2', label = 'Region', choices = unique.narm(parms$sequences_geog$region,'region'), selected = 'london')
-    if(geog=='County')
+    }
+    if(geog=='County'){
+      show('ti_hist_level2')
       updateCheckboxGroupInput(session, inputId='ti_hist_level2', label = 'County', choices = unique.narm(parms$sequences_geog$county,'county'), selected = 'cambridgeshire')
-    if(geog=='Local authority')
+    }
+    if(geog=='Local authority'){
+      show('ti_hist_level2')
       updateCheckboxGroupInput(session, inputId='ti_hist_level2', label = 'Local authority', choices = unique.narm(parms$sequences_geog$lad), selected = 'city of london')
+    }
   })
   
   ## plot hist for geography
