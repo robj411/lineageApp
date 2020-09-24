@@ -103,7 +103,7 @@ shinyUI(
                         ),
                         tabPanel("Heatplot",
                                  fluidRow(selectInput('ti_heat_norm', label = 'Normalisation', c('None','By lineage','By region'),selected='None')),
-                                 column(12, plotOutput( 'heatmap', width = "1000px", height = "400px"))
+                                 column(12, plotOutput( 'heatmap', width = "500px", height = "4000px"))
                                  #column(6, plotOutput( 'hist_by_location3', width = "100%", height = "400px"))
                         )
                       )
