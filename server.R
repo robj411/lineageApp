@@ -263,15 +263,21 @@ shiny::shinyServer(function(input, output, session) {
   ## regions and lineages ########################################
   observe({
     output$heatmap <- renderPlot({
-      par(mar=c(12,12,5,5.5))
+      par(mar=c(5,12,1,5.5))
       normalisation <- input$ti_heat_norm
       tab <- parms$region_table
-      collabs <- rownames(parms$region_table)
+      collabs <- colnames(parms$region_table)
       if(normalisation=='By lineage') for(i in 1:ncol(tab)) tab[,i] <- tab[,i]/sum(tab[,i])
       if(normalisation=='By region') for(i in 1:nrow(tab)) tab[i,] <- tab[i,]/sum(tab[i,])
-      blueheat(t(tab),collabs,collegend='top')
+      blueheat(tab,collabs)
     })
   })
+#  observe({
+#    output$heatmap <- renderPlot({
+#      par(mar=c(12,12,5,5.5))
+#      blueheat(t(tab),collabs,collegend='top')
+#    })
+#  })
   
   ## tree ########################################################
   ## which filename is selected for tree?
