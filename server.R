@@ -30,7 +30,7 @@ shiny::shinyServer(function(input, output, session) {
   updateSelectInput(session, inputId='ti_region', label = 'Region', choices = unique(parms$sequences_geog$region), selected = 'london')
   
   ## initialise reactive values
-  re.filename <- reactiveVal( parms$filename )
+  #re.filename <- reactiveVal( parms$filename )
   re.filename_tree <- reactiveVal( parms$filename_tree )
   re.hist <- reactiveVal( 'Combined' )
   
@@ -138,7 +138,7 @@ shiny::shinyServer(function(input, output, session) {
   ## which filenames are selected for trajectories?
   observeEvent( {
     input$ti_filename}, {
-    re.filename( input$ti_filename )
+    #re.filename( input$ti_filename )
     ## if just one trajectory, update tree
     if(length(input$ti_filename)==1&input$ti_curve=='By lineage')
       updateSelectInput(session,"ti_filename_tree",selected=input$ti_filename)
@@ -195,7 +195,8 @@ shiny::shinyServer(function(input, output, session) {
     input$ti_log_size
     },{
     ci <- input$ti_ci
-    fname <- re.filename() 
+    fname <- input$ti_filename#re.filename() 
+    #print(fname)
     lin <- update_lineage(fname)
     if(!is.na(lin[[2]][1])){
       output$GR <- renderPlot({
